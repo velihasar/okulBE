@@ -1,6 +1,8 @@
 using System;
 using System.Reflection;
 using Core.Entities.Concrete;
+using Core.Entities.Concrete.Project;
+using Entities.Concrete;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 
@@ -51,11 +53,35 @@ namespace DataAccess.Concrete.EntityFramework.Contexts
         public DbSet<Translate> Translates { get; set; }
         public DbSet<UserDevice> UserDevices { get; set; }
 
+        // School / Multi-Tenant Entities
+        public DbSet<Tenant> Tenants { get; set; }
+        public DbSet<Branch> Branches { get; set; }
+        public DbSet<TenantUser> TenantUsers { get; set; }
+        public DbSet<Person> People { get; set; }
+        public DbSet<Student> Students { get; set; }
+        public DbSet<Teacher> Teachers { get; set; }
+        public DbSet<Parent> Parents { get; set; }
+        public DbSet<StudentParent> StudentParents { get; set; }
+        public DbSet<TenantUser> TenantUsers { get; set; }
+
         protected IConfiguration Configuration { get; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.ApplyConfigurationsFromAssembly(Assembly.GetExecutingAssembly());
+
+            modelBuilder.Entity<StudentParent>()
+                .HasKey(sp => new { sp.StudentId, sp.ParentId });
+
+            modelBuilder.Entity<StudentParent>()
+                .HasOne(sp => sp.Student)
+                .WithMany(s => s.Parents)
+                .HasForeignKey(sp => sp.StudentId);
+
+            modelBuilder.Entity<StudentParent>()
+                .HasOne(sp => sp.Parent)
+                .WithMany(p => p.Students)
+                .HasForeignKey(sp => sp.ParentId);
         }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)

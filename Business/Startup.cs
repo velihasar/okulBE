@@ -160,6 +160,14 @@ namespace Business
         public void ConfigureDevelopmentServices(IServiceCollection services)
         {
             ConfigureServices(services);
+            services.AddTransient<ITenantUserRepository, TenantUserRepository>();
+            services.AddTransient<ITenantRepository, TenantRepository>();
+            services.AddTransient<ITeacherRepository, TeacherRepository>();
+            services.AddTransient<IStudentParentRepository, StudentParentRepository>();
+            services.AddTransient<IStudentRepository, StudentRepository>();
+            services.AddTransient<IPersonRepository, PersonRepository>();
+            services.AddTransient<IParentRepository, ParentRepository>();
+            services.AddTransient<IBranchRepository, BranchRepository>();
             services.AddTransient<ILogRepository, LogRepository>();
             services.AddTransient<ITranslateRepository, TranslateRepository>();
             services.AddTransient<ILanguageRepository, LanguageRepository>();
@@ -184,6 +192,14 @@ namespace Business
         public void ConfigureStagingServices(IServiceCollection services)
         {
             ConfigureServices(services);
+            services.AddTransient<ITenantUserRepository, TenantUserRepository>();
+            services.AddTransient<ITenantRepository, TenantRepository>();
+            services.AddTransient<ITeacherRepository, TeacherRepository>();
+            services.AddTransient<IStudentParentRepository, StudentParentRepository>();
+            services.AddTransient<IStudentRepository, StudentRepository>();
+            services.AddTransient<IPersonRepository, PersonRepository>();
+            services.AddTransient<IParentRepository, ParentRepository>();
+            services.AddTransient<IBranchRepository, BranchRepository>();
             services.AddTransient<ILogRepository, LogRepository>();
             services.AddTransient<ITranslateRepository, TranslateRepository>();
             services.AddTransient<ILanguageRepository, LanguageRepository>();
@@ -206,6 +222,14 @@ namespace Business
         public void ConfigureProductionServices(IServiceCollection services)
         {
             ConfigureServices(services);
+            services.AddTransient<ITenantUserRepository, TenantUserRepository>();
+            services.AddTransient<ITenantRepository, TenantRepository>();
+            services.AddTransient<ITeacherRepository, TeacherRepository>();
+            services.AddTransient<IStudentParentRepository, StudentParentRepository>();
+            services.AddTransient<IStudentRepository, StudentRepository>();
+            services.AddTransient<IPersonRepository, PersonRepository>();
+            services.AddTransient<IParentRepository, ParentRepository>();
+            services.AddTransient<IBranchRepository, BranchRepository>();
             services.AddTransient<ILogRepository, LogRepository>();
             services.AddTransient<ITranslateRepository, TranslateRepository>();
             services.AddTransient<ILanguageRepository, LanguageRepository>();
