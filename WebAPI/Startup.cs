@@ -223,7 +223,7 @@ namespace WebAPI
 
                 app.UseSwaggerUI(c =>
                 {
-                    c.SwaggerEndpoint("v1/swagger.json", "Backend SDK");
+                    c.SwaggerEndpoint("v1/swagger.json", "okulBe");
                     c.DocExpansion(DocExpansion.None);
                 });
             }
