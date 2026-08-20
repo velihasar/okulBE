@@ -1,6 +1,7 @@
 
 using Business.Constants;
 using Business.BusinessAspects;
+using Business.Handlers.People.FilterPerson;
 using Core.Aspects.Autofac.Caching;
 using Core.Aspects.Autofac.Logging;
 using Core.CrossCuttingConcerns.Logging.Serilog.Loggers;
@@ -13,16 +14,14 @@ using System.Threading.Tasks;
 using System.Linq;
 using Core.Aspects.Autofac.Validation;
 using Business.Handlers.People.ValidationRules;
-
+using Core.Entities.Dtos.PersonDto;
+using Core.Extensions;
 
 namespace Business.Handlers.People.Commands
 {
-
-
-    public class UpdatePersonCommand : IRequest<IResult>
+    public class UpdatePersonCommand : IRequest<IDataResult<PersonUpdateResponseDto>>
     {
         public int Id { get; set; }
-        public int TenantId { get; set; }
         public int? UserId { get; set; }
         public string FirstName { get; set; }
         public string LastName { get; set; }
@@ -32,7 +31,7 @@ namespace Business.Handlers.People.Commands
         public string PhotoUrl { get; set; }
         public bool IsActive { get; set; }
 
-        public class UpdatePersonCommandHandler : IRequestHandler<UpdatePersonCommand, IResult>
+        public class UpdatePersonCommandHandler : IRequestHandler<UpdatePersonCommand, IDataResult<PersonUpdateResponseDto>>
         {
             private readonly IPersonRepository _personRepository;
             private readonly IMediator _mediator;
@@ -47,12 +46,24 @@ namespace Business.Handlers.People.Commands
             [CacheRemoveAspect("Get")]
             [LogAspect(typeof(FileLogger))]
             [SecuredOperation(Priority = 1)]
-            public async Task<IResult> Handle(UpdatePersonCommand request, CancellationToken cancellationToken)
+            public async Task<IDataResult<PersonUpdateResponseDto>> Handle(UpdatePersonCommand request, CancellationToken cancellationToken)
             {
-                var isTherePersonRecord = await _personRepository.GetAsync(u => u.Id == request.Id);
+                var isTherePersonRecord = await _personRepository.GetAsync(PersonFiltersHelper.UpdatePersonCommandFilter(request));
+                if (isTherePersonRecord == null)
+                    return new ErrorDataResult<PersonUpdateResponseDto>("Kayıt bulunamadı.");
 
+                var tenantId = UserInfoExtensions.GetTenantIdOrZero();
+                var userId = UserInfoExtensions.GetUserIdOrZero();
+                if (tenantId > 0)
+                {
+                    isTherePersonRecord.TenantId = tenantId;
+                }
+                if (userId > 0)
+                {
+                    isTherePersonRecord.UpdatedBy = userId;
+                }
+                isTherePersonRecord.UpdatedDate = System.DateTime.Now;
 
-                isTherePersonRecord.TenantId = request.TenantId;
                 isTherePersonRecord.UserId = request.UserId;
                 isTherePersonRecord.FirstName = request.FirstName;
                 isTherePersonRecord.LastName = request.LastName;
@@ -62,10 +73,22 @@ namespace Business.Handlers.People.Commands
                 isTherePersonRecord.PhotoUrl = request.PhotoUrl;
                 isTherePersonRecord.IsActive = request.IsActive;
 
-
                 _personRepository.Update(isTherePersonRecord);
                 await _personRepository.SaveChangesAsync();
-                return new SuccessResult(Messages.Updated);
+
+                var dto = new PersonUpdateResponseDto
+                {
+                    Id = isTherePersonRecord.Id,
+                    UserId = isTherePersonRecord.UserId,
+                    FirstName = isTherePersonRecord.FirstName,
+                    LastName = isTherePersonRecord.LastName,
+                    DateOfBirth = isTherePersonRecord.DateOfBirth,
+                    Phone = isTherePersonRecord.Phone,
+                    Email = isTherePersonRecord.Email,
+                    PhotoUrl = isTherePersonRecord.PhotoUrl
+                };
+
+                return new SuccessDataResult<PersonUpdateResponseDto>(dto, Messages.Updated);
             }
         }
     }

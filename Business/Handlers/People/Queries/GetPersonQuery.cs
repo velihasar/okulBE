@@ -1,5 +1,6 @@
 
 using Business.BusinessAspects;
+using Business.Handlers.People.FilterPerson;
 using Core.Utilities.Results;
 using DataAccess.Abstract;
 using Entities.Concrete;
@@ -8,16 +9,15 @@ using System.Threading;
 using System.Threading.Tasks;
 using Core.Aspects.Autofac.Logging;
 using Core.CrossCuttingConcerns.Logging.Serilog.Loggers;
-using Core.Entities.Concrete.Project;
-
+using Core.Entities.Dtos.PersonDto;
 
 namespace Business.Handlers.People.Queries
 {
-    public class GetPersonQuery : IRequest<IDataResult<Person>>
+    public class GetPersonQuery : IRequest<IDataResult<PersonGetByIdDto>>
     {
         public int Id { get; set; }
 
-        public class GetPersonQueryHandler : IRequestHandler<GetPersonQuery, IDataResult<Person>>
+        public class GetPersonQueryHandler : IRequestHandler<GetPersonQuery, IDataResult<PersonGetByIdDto>>
         {
             private readonly IPersonRepository _personRepository;
             private readonly IMediator _mediator;
@@ -29,10 +29,24 @@ namespace Business.Handlers.People.Queries
             }
             [LogAspect(typeof(FileLogger))]
             [SecuredOperation(Priority = 1)]
-            public async Task<IDataResult<Person>> Handle(GetPersonQuery request, CancellationToken cancellationToken)
+            public async Task<IDataResult<PersonGetByIdDto>> Handle(GetPersonQuery request, CancellationToken cancellationToken)
             {
-                var person = await _personRepository.GetAsync(p => p.Id == request.Id);
-                return new SuccessDataResult<Person>(person);
+                var person = await _personRepository.GetAsync(PersonFiltersHelper.GetPersonQueryFilter(request));
+                if (person == null)
+                    return new ErrorDataResult<PersonGetByIdDto>("Kayıt bulunamadı.");
+
+                var dto = new PersonGetByIdDto
+                {
+                    Id = person.Id,
+                    UserId = person.UserId,
+                    FirstName = person.FirstName,
+                    LastName = person.LastName,
+                    DateOfBirth = person.DateOfBirth,
+                    Phone = person.Phone,
+                    Email = person.Email,
+                    PhotoUrl = person.PhotoUrl
+                };
+                return new SuccessDataResult<PersonGetByIdDto>(dto);
             }
         }
     }

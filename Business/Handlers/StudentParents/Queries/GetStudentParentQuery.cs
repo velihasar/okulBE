@@ -1,5 +1,5 @@
-
 using Business.BusinessAspects;
+using Business.Handlers.StudentParents.FilterStudentParent;
 using Core.Utilities.Results;
 using DataAccess.Abstract;
 using Entities.Concrete;
@@ -8,16 +8,15 @@ using System.Threading;
 using System.Threading.Tasks;
 using Core.Aspects.Autofac.Logging;
 using Core.CrossCuttingConcerns.Logging.Serilog.Loggers;
-using Core.Entities.Concrete.Project;
-
+using Core.Entities.Dtos.StudentParentDto;
 
 namespace Business.Handlers.StudentParents.Queries
 {
-    public class GetStudentParentQuery : IRequest<IDataResult<StudentParent>>
+    public class GetStudentParentQuery : IRequest<IDataResult<StudentParentGetByIdDto>>
     {
-        public int StudentId { get; set; }
+        public int Id { get; set; }
 
-        public class GetStudentParentQueryHandler : IRequestHandler<GetStudentParentQuery, IDataResult<StudentParent>>
+        public class GetStudentParentQueryHandler : IRequestHandler<GetStudentParentQuery, IDataResult<StudentParentGetByIdDto>>
         {
             private readonly IStudentParentRepository _studentParentRepository;
             private readonly IMediator _mediator;
@@ -29,10 +28,21 @@ namespace Business.Handlers.StudentParents.Queries
             }
             [LogAspect(typeof(FileLogger))]
             [SecuredOperation(Priority = 1)]
-            public async Task<IDataResult<StudentParent>> Handle(GetStudentParentQuery request, CancellationToken cancellationToken)
+            public async Task<IDataResult<StudentParentGetByIdDto>> Handle(GetStudentParentQuery request, CancellationToken cancellationToken)
             {
-                var studentParent = await _studentParentRepository.GetAsync(p => p.StudentId == request.StudentId);
-                return new SuccessDataResult<StudentParent>(studentParent);
+                var studentParent = await _studentParentRepository.GetAsync(StudentParentFiltersHelper.GetStudentParentQueryFilter(request));
+                if (studentParent == null)
+                    return new ErrorDataResult<StudentParentGetByIdDto>("Kayıt bulunamadı.");
+
+                var dto = new StudentParentGetByIdDto
+                {
+                    Id = studentParent.Id,
+                    StudentId = studentParent.StudentId,
+                    ParentId = studentParent.ParentId,
+                    Relationship = studentParent.Relationship,
+                    IsPrimary = studentParent.IsPrimary
+                };
+                return new SuccessDataResult<StudentParentGetByIdDto>(dto);
             }
         }
     }

@@ -3,11 +3,8 @@ using Core.Entities;
 
 namespace Core.Entities.Concrete.Project
 {
-    public class Person : IEntity
+    public class Person : TenantEntity, IEntity
     {
-        public int Id { get; set; }
-
-        public int TenantId { get; set; }
 
         public int? UserId { get; set; }
 
@@ -22,10 +19,6 @@ namespace Core.Entities.Concrete.Project
         public string? Email { get; set; }
 
         public string? PhotoUrl { get; set; }
-
-        public bool IsActive { get; set; }
-
-        public Tenant Tenant { get; set; } = null!;
 
         public Student? Student { get; set; }
 

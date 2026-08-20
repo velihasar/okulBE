@@ -1,4 +1,4 @@
-﻿
+
 using Business.Handlers.TenantUsers.Commands;
 using Business.Handlers.TenantUsers.Queries;
 using Microsoft.AspNetCore.Mvc;
@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Http;
 using Entities.Concrete;
 using System.Collections.Generic;
 using Core.Entities.Concrete.Project;
+using Core.Entities.Dtos.TenantUserDto;
 
 namespace WebAPI.Controllers
 {
@@ -25,7 +26,7 @@ namespace WebAPI.Controllers
         ///<return>List TenantUsers</return>
         ///<response code="200"></response>
         [Produces("application/json", "text/plain")]
-        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(IEnumerable<TenantUser>))]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(IEnumerable<TenantUserGetAllDto>))]
         [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(string))]
         [HttpGet("getall")]
         public async Task<IActionResult> GetList()
@@ -45,7 +46,7 @@ namespace WebAPI.Controllers
         ///<return>TenantUsers List</return>
         ///<response code="200"></response>  
         [Produces("application/json", "text/plain")]
-        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(TenantUser))]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(TenantUserGetByIdDto))]
         [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(string))]
         [HttpGet("getbyid")]
         public async Task<IActionResult> GetById(int id)
@@ -64,7 +65,7 @@ namespace WebAPI.Controllers
         /// <param name="createTenantUser"></param>
         /// <returns></returns>
         [Produces("application/json", "text/plain")]
-        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(string))]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(TenantUserCreateResponseDto))]
         [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(string))]
         [HttpPost]
         public async Task<IActionResult> Add([FromBody] CreateTenantUserCommand createTenantUser)
@@ -72,7 +73,7 @@ namespace WebAPI.Controllers
             var result = await Mediator.Send(createTenantUser);
             if (result.Success)
             {
-                return Ok(result.Message);
+                return Ok(result);
             }
             return BadRequest(result.Message);
         }
@@ -83,7 +84,7 @@ namespace WebAPI.Controllers
         /// <param name="updateTenantUser"></param>
         /// <returns></returns>
         [Produces("application/json", "text/plain")]
-        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(string))]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(TenantUserUpdateResponseDto))]
         [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(string))]
         [HttpPut]
         public async Task<IActionResult> Update([FromBody] UpdateTenantUserCommand updateTenantUser)
@@ -91,7 +92,7 @@ namespace WebAPI.Controllers
             var result = await Mediator.Send(updateTenantUser);
             if (result.Success)
             {
-                return Ok(result.Message);
+                return Ok(result);
             }
             return BadRequest(result.Message);
         }

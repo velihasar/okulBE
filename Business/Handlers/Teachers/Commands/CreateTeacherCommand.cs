@@ -1,6 +1,7 @@
 
 using Business.BusinessAspects;
 using Business.Constants;
+using Business.Handlers.Teachers.FilterTeacher;
 using Core.Aspects.Autofac.Caching;
 using Core.Aspects.Autofac.Logging;
 using Core.Aspects.Autofac.Validation;
@@ -14,22 +15,22 @@ using System.Threading.Tasks;
 using System.Linq;
 using Business.Handlers.Teachers.ValidationRules;
 using Core.Entities.Concrete.Project;
+using Core.Entities.Dtos.TeacherDto;
+using Core.Extensions;
 
 namespace Business.Handlers.Teachers.Commands
 {
     /// <summary>
     /// 
     /// </summary>
-    public class CreateTeacherCommand : IRequest<IResult>
+    public class CreateTeacherCommand : IRequest<IDataResult<TeacherCreateResponseDto>>
     {
 
-        public int TenantId { get; set; }
         public int PersonId { get; set; }
         public System.DateTime StartDate { get; set; }
-        public bool IsActive { get; set; }
 
 
-        public class CreateTeacherCommandHandler : IRequestHandler<CreateTeacherCommand, IResult>
+        public class CreateTeacherCommandHandler : IRequestHandler<CreateTeacherCommand, IDataResult<TeacherCreateResponseDto>>
         {
             private readonly ITeacherRepository _teacherRepository;
             private readonly IMediator _mediator;
@@ -43,25 +44,38 @@ namespace Business.Handlers.Teachers.Commands
             [CacheRemoveAspect("Get")]
             [LogAspect(typeof(FileLogger))]
             [SecuredOperation(Priority = 1)]
-            public async Task<IResult> Handle(CreateTeacherCommand request, CancellationToken cancellationToken)
+            public async Task<IDataResult<TeacherCreateResponseDto>> Handle(CreateTeacherCommand request, CancellationToken cancellationToken)
             {
-                var isThereTeacherRecord = _teacherRepository.Query().Any(u => u.TenantId == request.TenantId);
+                var tenantId = UserInfoExtensions.GetTenantIdOrZero();
+                var userId = UserInfoExtensions.GetUserIdOrZero();
 
-                if (isThereTeacherRecord == true)
-                    return new ErrorResult(Messages.NameAlreadyExist);
+                var isThereTeacherRecord = _teacherRepository.Query().Any(TeacherFiltersHelper.CreateTeacherCommandFilter(request));
+
+                if (isThereTeacherRecord)
+                    return new ErrorDataResult<TeacherCreateResponseDto>(Messages.NameAlreadyExist);
 
                 var addedTeacher = new Teacher
                 {
-                    TenantId = request.TenantId,
+                    TenantId = tenantId,
                     PersonId = request.PersonId,
                     StartDate = request.StartDate,
-                    IsActive = request.IsActive,
-
+                    IsActive = true,
+                    IsDeleted = false,
+                    CreatedBy = userId > 0 ? userId : null,
+                    CreatedDate = System.DateTime.Now
                 };
 
                 _teacherRepository.Add(addedTeacher);
                 await _teacherRepository.SaveChangesAsync();
-                return new SuccessResult(Messages.Added);
+
+                var dto = new TeacherCreateResponseDto
+                {
+                    Id = addedTeacher.Id,
+                    PersonId = addedTeacher.PersonId,
+                    StartDate = addedTeacher.StartDate
+                };
+
+                return new SuccessDataResult<TeacherCreateResponseDto>(dto, Messages.Added);
             }
         }
     }

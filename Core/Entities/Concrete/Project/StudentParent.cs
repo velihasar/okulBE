@@ -3,7 +3,7 @@ using Core.Entities;
 
 namespace Core.Entities.Concrete.Project
 {
-    public class StudentParent : IEntity
+    public class StudentParent :TenantEntity, IEntity
     {
         public int StudentId { get; set; }
 

@@ -1,6 +1,7 @@
-﻿
+
 using Business.BusinessAspects;
 using Business.Constants;
+using Business.Handlers.Tenants.FilterTenant;
 using Core.Aspects.Autofac.Caching;
 using Core.Aspects.Autofac.Logging;
 using Core.Aspects.Autofac.Validation;
@@ -14,22 +15,23 @@ using System.Threading.Tasks;
 using System.Linq;
 using Business.Handlers.Tenants.ValidationRules;
 using Core.Entities.Concrete.Project;
+using Core.Entities.Dtos.TenantDto;
+using Core.Extensions;
 
 namespace Business.Handlers.Tenants.Commands
 {
     /// <summary>
     /// 
     /// </summary>
-    public class CreateTenantCommand : IRequest<IResult>
+    public class CreateTenantCommand : IRequest<IDataResult<TenantCreateResponseDto>>
     {
 
         public string Name { get; set; }
         public string Code { get; set; }
         public string LogoUrl { get; set; }
-        public bool IsActive { get; set; }
 
 
-        public class CreateTenantCommandHandler : IRequestHandler<CreateTenantCommand, IResult>
+        public class CreateTenantCommandHandler : IRequestHandler<CreateTenantCommand, IDataResult<TenantCreateResponseDto>>
         {
             private readonly ITenantRepository _tenantRepository;
             private readonly IMediator _mediator;
@@ -43,25 +45,38 @@ namespace Business.Handlers.Tenants.Commands
             [CacheRemoveAspect("Get")]
             [LogAspect(typeof(FileLogger))]
             [SecuredOperation(Priority = 1)]
-            public async Task<IResult> Handle(CreateTenantCommand request, CancellationToken cancellationToken)
+            public async Task<IDataResult<TenantCreateResponseDto>> Handle(CreateTenantCommand request, CancellationToken cancellationToken)
             {
-                var isThereTenantRecord = _tenantRepository.Query().Any(u => u.Name == request.Name);
+                var userId = UserInfoExtensions.GetUserIdOrZero();
 
-                if (isThereTenantRecord == true)
-                    return new ErrorResult(Messages.NameAlreadyExist);
+                var isThereTenantRecord = _tenantRepository.Query().Any(TenantFiltersHelper.CreateTenantCommandFilter(request));
+
+                if (isThereTenantRecord)
+                    return new ErrorDataResult<TenantCreateResponseDto>(Messages.NameAlreadyExist);
 
                 var addedTenant = new Tenant
                 {
                     Name = request.Name,
                     Code = request.Code,
                     LogoUrl = request.LogoUrl,
-                    IsActive = request.IsActive,
-
+                    IsActive = true,
+                    IsDeleted = false,
+                    CreatedBy = userId > 0 ? userId : null,
+                    CreatedDate = System.DateTime.Now
                 };
 
                 _tenantRepository.Add(addedTenant);
                 await _tenantRepository.SaveChangesAsync();
-                return new SuccessResult(Messages.Added);
+
+                var dto = new TenantCreateResponseDto
+                {
+                    Id = addedTenant.Id,
+                    Name = addedTenant.Name,
+                    Code = addedTenant.Code,
+                    LogoUrl = addedTenant.LogoUrl
+                };
+
+                return new SuccessDataResult<TenantCreateResponseDto>(dto, Messages.Added);
             }
         }
     }

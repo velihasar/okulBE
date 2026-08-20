@@ -54,5 +54,74 @@ namespace Core.Extensions
 
 			return userId;
 		}
+
+		public static int GetTenantId()
+		{
+			var httpContext = HttpContextAccessor?.HttpContext;
+			if (httpContext == null)
+			{
+				throw new UnauthorizedAccessException("HTTP Context bulunamadı.");
+			}
+
+			// 1. Claims kontrolü
+			var claimResult = httpContext.User?.Claims?.FirstOrDefault(x => 
+				x.Type.Equals("tenantid", StringComparison.OrdinalIgnoreCase) ||
+				x.Type.EndsWith("tenantid", StringComparison.OrdinalIgnoreCase) ||
+				x.Type.Equals("TenantId", StringComparison.OrdinalIgnoreCase))?.Value;
+
+			if (!string.IsNullOrEmpty(claimResult) && int.TryParse(claimResult, out int tenantIdFromClaim) && tenantIdFromClaim > 0)
+			{
+				return tenantIdFromClaim;
+			}
+
+			// 2. Request Header kontrolü (X-Tenant-Id)
+			if (httpContext.Request?.Headers != null && httpContext.Request.Headers.TryGetValue("X-Tenant-Id", out var headerResult))
+			{
+				if (!string.IsNullOrEmpty(headerResult) && int.TryParse(headerResult, out int tenantIdFromHeader) && tenantIdFromHeader > 0)
+				{
+					return tenantIdFromHeader;
+				}
+			}
+
+			throw new UnauthorizedAccessException("Tenant kimliği bulunamadı.");
+		}
+
+		public static int GetTenantIdOrZero()
+		{
+			try
+			{
+				var httpContext = HttpContextAccessor?.HttpContext;
+				if (httpContext == null)
+				{
+					return 0;
+				}
+
+				// 1. Claims kontrolü
+				var claimResult = httpContext.User?.Claims?.FirstOrDefault(x => 
+					x.Type.Equals("tenantid", StringComparison.OrdinalIgnoreCase) ||
+					x.Type.EndsWith("tenantid", StringComparison.OrdinalIgnoreCase) ||
+					x.Type.Equals("TenantId", StringComparison.OrdinalIgnoreCase))?.Value;
+
+				if (!string.IsNullOrEmpty(claimResult) && int.TryParse(claimResult, out int tenantIdFromClaim) && tenantIdFromClaim > 0)
+				{
+					return tenantIdFromClaim;
+				}
+
+				// 2. Request Header kontrolü (X-Tenant-Id)
+				if (httpContext.Request?.Headers != null && httpContext.Request.Headers.TryGetValue("X-Tenant-Id", out var headerResult))
+				{
+					if (!string.IsNullOrEmpty(headerResult) && int.TryParse(headerResult, out int tenantIdFromHeader) && tenantIdFromHeader > 0)
+					{
+						return tenantIdFromHeader;
+					}
+				}
+
+				return 0;
+			}
+			catch
+			{
+				return 0;
+			}
+		}
 	}
 }

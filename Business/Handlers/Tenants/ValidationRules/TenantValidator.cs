@@ -1,4 +1,4 @@
-﻿
+
 using Business.Handlers.Tenants.Commands;
 using FluentValidation;
 
@@ -12,19 +12,16 @@ namespace Business.Handlers.Tenants.ValidationRules
             RuleFor(x => x.Name).NotEmpty();
             RuleFor(x => x.Code).NotEmpty();
             RuleFor(x => x.LogoUrl).NotEmpty();
-            RuleFor(x => x.IsActive).NotEmpty();
-
         }
     }
     public class UpdateTenantValidator : AbstractValidator<UpdateTenantCommand>
     {
         public UpdateTenantValidator()
         {
+            RuleFor(x => x.Id).NotEmpty();
             RuleFor(x => x.Name).NotEmpty();
             RuleFor(x => x.Code).NotEmpty();
             RuleFor(x => x.LogoUrl).NotEmpty();
-            RuleFor(x => x.IsActive).NotEmpty();
-
         }
     }
 }

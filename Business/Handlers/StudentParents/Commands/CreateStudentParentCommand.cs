@@ -1,6 +1,7 @@
 
 using Business.BusinessAspects;
 using Business.Constants;
+using Business.Handlers.StudentParents.FilterStudentParent;
 using Core.Aspects.Autofac.Caching;
 using Core.Aspects.Autofac.Logging;
 using Core.Aspects.Autofac.Validation;
@@ -14,21 +15,24 @@ using System.Threading.Tasks;
 using System.Linq;
 using Business.Handlers.StudentParents.ValidationRules;
 using Core.Entities.Concrete.Project;
+using Core.Entities.Dtos.StudentParentDto;
+using Core.Extensions;
 
 namespace Business.Handlers.StudentParents.Commands
 {
     /// <summary>
     /// 
     /// </summary>
-    public class CreateStudentParentCommand : IRequest<IResult>
+    public class CreateStudentParentCommand : IRequest<IDataResult<StudentParentCreateResponseDto>>
     {
 
+        public int StudentId { get; set; }
         public int ParentId { get; set; }
         public string Relationship { get; set; }
         public bool IsPrimary { get; set; }
 
 
-        public class CreateStudentParentCommandHandler : IRequestHandler<CreateStudentParentCommand, IResult>
+        public class CreateStudentParentCommandHandler : IRequestHandler<CreateStudentParentCommand, IDataResult<StudentParentCreateResponseDto>>
         {
             private readonly IStudentParentRepository _studentParentRepository;
             private readonly IMediator _mediator;
@@ -42,24 +46,42 @@ namespace Business.Handlers.StudentParents.Commands
             [CacheRemoveAspect("Get")]
             [LogAspect(typeof(FileLogger))]
             [SecuredOperation(Priority = 1)]
-            public async Task<IResult> Handle(CreateStudentParentCommand request, CancellationToken cancellationToken)
+            public async Task<IDataResult<StudentParentCreateResponseDto>> Handle(CreateStudentParentCommand request, CancellationToken cancellationToken)
             {
-                var isThereStudentParentRecord = _studentParentRepository.Query().Any(u => u.ParentId == request.ParentId);
+                var tenantId = UserInfoExtensions.GetTenantIdOrZero();
+                var userId = UserInfoExtensions.GetUserIdOrZero();
 
-                if (isThereStudentParentRecord == true)
-                    return new ErrorResult(Messages.NameAlreadyExist);
+                var isThereStudentParentRecord = _studentParentRepository.Query().Any(StudentParentFiltersHelper.CreateStudentParentCommandFilter(request));
+
+                if (isThereStudentParentRecord)
+                    return new ErrorDataResult<StudentParentCreateResponseDto>(Messages.NameAlreadyExist);
 
                 var addedStudentParent = new StudentParent
                 {
+                    TenantId = tenantId,
+                    StudentId = request.StudentId,
                     ParentId = request.ParentId,
                     Relationship = request.Relationship,
                     IsPrimary = request.IsPrimary,
-
+                    IsActive = true,
+                    IsDeleted = false,
+                    CreatedBy = userId > 0 ? userId : null,
+                    CreatedDate = System.DateTime.Now
                 };
 
                 _studentParentRepository.Add(addedStudentParent);
                 await _studentParentRepository.SaveChangesAsync();
-                return new SuccessResult(Messages.Added);
+
+                var dto = new StudentParentCreateResponseDto
+                {
+                    Id = addedStudentParent.Id,
+                    StudentId = addedStudentParent.StudentId,
+                    ParentId = addedStudentParent.ParentId,
+                    Relationship = addedStudentParent.Relationship,
+                    IsPrimary = addedStudentParent.IsPrimary
+                };
+
+                return new SuccessDataResult<StudentParentCreateResponseDto>(dto, Messages.Added);
             }
         }
     }

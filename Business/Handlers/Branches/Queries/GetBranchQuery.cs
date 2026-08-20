@@ -1,5 +1,6 @@
 
 using Business.BusinessAspects;
+using Business.Handlers.Branches.FilterBranch;
 using Core.Utilities.Results;
 using DataAccess.Abstract;
 using Entities.Concrete;
@@ -8,16 +9,15 @@ using System.Threading;
 using System.Threading.Tasks;
 using Core.Aspects.Autofac.Logging;
 using Core.CrossCuttingConcerns.Logging.Serilog.Loggers;
-using Core.Entities.Concrete.Project;
-
+using Core.Entities.Dtos.BranchDto;
 
 namespace Business.Handlers.Branches.Queries
 {
-    public class GetBranchQuery : IRequest<IDataResult<Branch>>
+    public class GetBranchQuery : IRequest<IDataResult<BranchGetByIdDto>>
     {
         public int Id { get; set; }
 
-        public class GetBranchQueryHandler : IRequestHandler<GetBranchQuery, IDataResult<Branch>>
+        public class GetBranchQueryHandler : IRequestHandler<GetBranchQuery, IDataResult<BranchGetByIdDto>>
         {
             private readonly IBranchRepository _branchRepository;
             private readonly IMediator _mediator;
@@ -29,10 +29,20 @@ namespace Business.Handlers.Branches.Queries
             }
             [LogAspect(typeof(FileLogger))]
             [SecuredOperation(Priority = 1)]
-            public async Task<IDataResult<Branch>> Handle(GetBranchQuery request, CancellationToken cancellationToken)
+            public async Task<IDataResult<BranchGetByIdDto>> Handle(GetBranchQuery request, CancellationToken cancellationToken)
             {
-                var branch = await _branchRepository.GetAsync(p => p.Id == request.Id);
-                return new SuccessDataResult<Branch>(branch);
+                var branch = await _branchRepository.GetAsync(BranchFiltersHelper.GetBranchQueryFilter(request));
+                if (branch == null)
+                    return new ErrorDataResult<BranchGetByIdDto>("Kayıt bulunamadı.");
+
+                var dto = new BranchGetByIdDto
+                {
+                    Id = branch.Id,
+                    Name = branch.Name,
+                    Address = branch.Address,
+                    Phone = branch.Phone
+                };
+                return new SuccessDataResult<BranchGetByIdDto>(dto);
             }
         }
     }

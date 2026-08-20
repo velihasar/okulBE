@@ -1,24 +1,25 @@
-﻿
+
 using Business.BusinessAspects;
+using Business.Handlers.Tenants.FilterTenant;
 using Core.Aspects.Autofac.Performance;
 using Core.Utilities.Results;
 using DataAccess.Abstract;
 using Entities.Concrete;
 using MediatR;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Core.Aspects.Autofac.Logging;
 using Core.CrossCuttingConcerns.Logging.Serilog.Loggers;
 using Core.Aspects.Autofac.Caching;
-using Core.Entities.Concrete.Project;
+using Core.Entities.Dtos.TenantDto;
 
 namespace Business.Handlers.Tenants.Queries
 {
-
-    public class GetTenantsQuery : IRequest<IDataResult<IEnumerable<Tenant>>>
+    public class GetTenantsQuery : IRequest<IDataResult<IEnumerable<TenantGetAllDto>>>
     {
-        public class GetTenantsQueryHandler : IRequestHandler<GetTenantsQuery, IDataResult<IEnumerable<Tenant>>>
+        public class GetTenantsQueryHandler : IRequestHandler<GetTenantsQuery, IDataResult<IEnumerable<TenantGetAllDto>>>
         {
             private readonly ITenantRepository _tenantRepository;
             private readonly IMediator _mediator;
@@ -33,9 +34,17 @@ namespace Business.Handlers.Tenants.Queries
             [CacheAspect(10)]
             [LogAspect(typeof(FileLogger))]
             [SecuredOperation(Priority = 1)]
-            public async Task<IDataResult<IEnumerable<Tenant>>> Handle(GetTenantsQuery request, CancellationToken cancellationToken)
+            public async Task<IDataResult<IEnumerable<TenantGetAllDto>>> Handle(GetTenantsQuery request, CancellationToken cancellationToken)
             {
-                return new SuccessDataResult<IEnumerable<Tenant>>(await _tenantRepository.GetListAsync());
+                var list = await _tenantRepository.GetListAsync(TenantFiltersHelper.GetTenantsQueryFilter(request));
+                var dtos = list.Select(x => new TenantGetAllDto
+                {
+                    Id = x.Id,
+                    Name = x.Name,
+                    Code = x.Code,
+                    LogoUrl = x.LogoUrl
+                });
+                return new SuccessDataResult<IEnumerable<TenantGetAllDto>>(dtos);
             }
         }
     }

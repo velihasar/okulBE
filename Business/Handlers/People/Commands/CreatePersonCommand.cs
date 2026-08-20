@@ -1,6 +1,7 @@
 
 using Business.BusinessAspects;
 using Business.Constants;
+using Business.Handlers.People.FilterPerson;
 using Core.Aspects.Autofac.Caching;
 using Core.Aspects.Autofac.Logging;
 using Core.Aspects.Autofac.Validation;
@@ -14,16 +15,17 @@ using System.Threading.Tasks;
 using System.Linq;
 using Business.Handlers.People.ValidationRules;
 using Core.Entities.Concrete.Project;
+using Core.Entities.Dtos.PersonDto;
+using Core.Extensions;
 
 namespace Business.Handlers.People.Commands
 {
     /// <summary>
     /// 
     /// </summary>
-    public class CreatePersonCommand : IRequest<IResult>
+    public class CreatePersonCommand : IRequest<IDataResult<PersonCreateResponseDto>>
     {
 
-        public int TenantId { get; set; }
         public int? UserId { get; set; }
         public string FirstName { get; set; }
         public string LastName { get; set; }
@@ -31,10 +33,9 @@ namespace Business.Handlers.People.Commands
         public string Phone { get; set; }
         public string Email { get; set; }
         public string PhotoUrl { get; set; }
-        public bool IsActive { get; set; }
 
 
-        public class CreatePersonCommandHandler : IRequestHandler<CreatePersonCommand, IResult>
+        public class CreatePersonCommandHandler : IRequestHandler<CreatePersonCommand, IDataResult<PersonCreateResponseDto>>
         {
             private readonly IPersonRepository _personRepository;
             private readonly IMediator _mediator;
@@ -48,16 +49,19 @@ namespace Business.Handlers.People.Commands
             [CacheRemoveAspect("Get")]
             [LogAspect(typeof(FileLogger))]
             [SecuredOperation(Priority = 1)]
-            public async Task<IResult> Handle(CreatePersonCommand request, CancellationToken cancellationToken)
+            public async Task<IDataResult<PersonCreateResponseDto>> Handle(CreatePersonCommand request, CancellationToken cancellationToken)
             {
-                var isTherePersonRecord = _personRepository.Query().Any(u => u.TenantId == request.TenantId);
+                var tenantId = UserInfoExtensions.GetTenantIdOrZero();
+                var userId = UserInfoExtensions.GetUserIdOrZero();
 
-                if (isTherePersonRecord == true)
-                    return new ErrorResult(Messages.NameAlreadyExist);
+                var isTherePersonRecord = _personRepository.Query().Any(PersonFiltersHelper.CreatePersonCommandFilter(request));
+
+                if (isTherePersonRecord)
+                    return new ErrorDataResult<PersonCreateResponseDto>(Messages.NameAlreadyExist);
 
                 var addedPerson = new Person
                 {
-                    TenantId = request.TenantId,
+                    TenantId = tenantId,
                     UserId = request.UserId,
                     FirstName = request.FirstName,
                     LastName = request.LastName,
@@ -65,13 +69,28 @@ namespace Business.Handlers.People.Commands
                     Phone = request.Phone,
                     Email = request.Email,
                     PhotoUrl = request.PhotoUrl,
-                    IsActive = request.IsActive,
-
+                    IsActive = true,
+                    IsDeleted = false,
+                    CreatedBy = userId > 0 ? userId : null,
+                    CreatedDate = System.DateTime.Now
                 };
 
                 _personRepository.Add(addedPerson);
                 await _personRepository.SaveChangesAsync();
-                return new SuccessResult(Messages.Added);
+
+                var dto = new PersonCreateResponseDto
+                {
+                    Id = addedPerson.Id,
+                    UserId = addedPerson.UserId,
+                    FirstName = addedPerson.FirstName,
+                    LastName = addedPerson.LastName,
+                    DateOfBirth = addedPerson.DateOfBirth,
+                    Phone = addedPerson.Phone,
+                    Email = addedPerson.Email,
+                    PhotoUrl = addedPerson.PhotoUrl
+                };
+
+                return new SuccessDataResult<PersonCreateResponseDto>(dto, Messages.Added);
             }
         }
     }

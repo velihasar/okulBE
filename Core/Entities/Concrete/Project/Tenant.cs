@@ -4,17 +4,13 @@ using Core.Entities;
 
 namespace Core.Entities.Concrete.Project
 {
-    public class Tenant : IEntity
+    public class Tenant : BaseEntity, IEntity
     {
-        public int Id { get; set; }
-
         public string Name { get; set; } = null!;
 
         public string? Code { get; set; }
 
         public string? LogoUrl { get; set; }
-
-        public bool IsActive { get; set; }
 
         public ICollection<Branch> Branches { get; set; } = new List<Branch>();
 

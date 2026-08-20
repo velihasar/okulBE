@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Http;
 using Entities.Concrete;
 using System.Collections.Generic;
 using Core.Entities.Concrete.Project;
+using Core.Entities.Dtos.BranchDto;
 
 namespace WebAPI.Controllers
 {
@@ -25,7 +26,7 @@ namespace WebAPI.Controllers
         ///<return>List Branches</return>
         ///<response code="200"></response>
         [Produces("application/json", "text/plain")]
-        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(IEnumerable<Branch>))]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(IEnumerable<BranchGetAllDto>))]
         [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(string))]
         [HttpGet("getall")]
         public async Task<IActionResult> GetList()
@@ -45,7 +46,7 @@ namespace WebAPI.Controllers
         ///<return>Branches List</return>
         ///<response code="200"></response>  
         [Produces("application/json", "text/plain")]
-        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(Branch))]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(BranchGetByIdDto))]
         [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(string))]
         [HttpGet("getbyid")]
         public async Task<IActionResult> GetById(int id)
@@ -64,7 +65,7 @@ namespace WebAPI.Controllers
         /// <param name="createBranch"></param>
         /// <returns></returns>
         [Produces("application/json", "text/plain")]
-        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(string))]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(BranchCreateResponseDto))]
         [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(string))]
         [HttpPost]
         public async Task<IActionResult> Add([FromBody] CreateBranchCommand createBranch)
@@ -72,7 +73,7 @@ namespace WebAPI.Controllers
             var result = await Mediator.Send(createBranch);
             if (result.Success)
             {
-                return Ok(result.Message);
+                return Ok(result);
             }
             return BadRequest(result.Message);
         }
@@ -83,7 +84,7 @@ namespace WebAPI.Controllers
         /// <param name="updateBranch"></param>
         /// <returns></returns>
         [Produces("application/json", "text/plain")]
-        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(string))]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(BranchUpdateResponseDto))]
         [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(string))]
         [HttpPut]
         public async Task<IActionResult> Update([FromBody] UpdateBranchCommand updateBranch)
@@ -91,7 +92,7 @@ namespace WebAPI.Controllers
             var result = await Mediator.Send(updateBranch);
             if (result.Success)
             {
-                return Ok(result.Message);
+                return Ok(result);
             }
             return BadRequest(result.Message);
         }

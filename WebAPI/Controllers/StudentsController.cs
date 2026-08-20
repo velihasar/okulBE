@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Http;
 using Entities.Concrete;
 using System.Collections.Generic;
 using Core.Entities.Concrete.Project;
+using Core.Entities.Dtos.StudentDto;
 
 namespace WebAPI.Controllers
 {
@@ -25,7 +26,7 @@ namespace WebAPI.Controllers
         ///<return>List Students</return>
         ///<response code="200"></response>
         [Produces("application/json", "text/plain")]
-        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(IEnumerable<Student>))]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(IEnumerable<StudentGetAllDto>))]
         [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(string))]
         [HttpGet("getall")]
         public async Task<IActionResult> GetList()
@@ -45,7 +46,7 @@ namespace WebAPI.Controllers
         ///<return>Students List</return>
         ///<response code="200"></response>  
         [Produces("application/json", "text/plain")]
-        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(Student))]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(StudentGetByIdDto))]
         [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(string))]
         [HttpGet("getbyid")]
         public async Task<IActionResult> GetById(int id)
@@ -64,7 +65,7 @@ namespace WebAPI.Controllers
         /// <param name="createStudent"></param>
         /// <returns></returns>
         [Produces("application/json", "text/plain")]
-        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(string))]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(StudentCreateResponseDto))]
         [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(string))]
         [HttpPost]
         public async Task<IActionResult> Add([FromBody] CreateStudentCommand createStudent)
@@ -72,7 +73,7 @@ namespace WebAPI.Controllers
             var result = await Mediator.Send(createStudent);
             if (result.Success)
             {
-                return Ok(result.Message);
+                return Ok(result);
             }
             return BadRequest(result.Message);
         }
@@ -83,7 +84,7 @@ namespace WebAPI.Controllers
         /// <param name="updateStudent"></param>
         /// <returns></returns>
         [Produces("application/json", "text/plain")]
-        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(string))]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(StudentUpdateResponseDto))]
         [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(string))]
         [HttpPut]
         public async Task<IActionResult> Update([FromBody] UpdateStudentCommand updateStudent)
@@ -91,7 +92,7 @@ namespace WebAPI.Controllers
             var result = await Mediator.Send(updateStudent);
             if (result.Success)
             {
-                return Ok(result.Message);
+                return Ok(result);
             }
             return BadRequest(result.Message);
         }

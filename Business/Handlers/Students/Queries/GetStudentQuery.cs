@@ -1,5 +1,6 @@
 
 using Business.BusinessAspects;
+using Business.Handlers.Students.FilterStudent;
 using Core.Utilities.Results;
 using DataAccess.Abstract;
 using Entities.Concrete;
@@ -8,16 +9,15 @@ using System.Threading;
 using System.Threading.Tasks;
 using Core.Aspects.Autofac.Logging;
 using Core.CrossCuttingConcerns.Logging.Serilog.Loggers;
-using Core.Entities.Concrete.Project;
-
+using Core.Entities.Dtos.StudentDto;
 
 namespace Business.Handlers.Students.Queries
 {
-    public class GetStudentQuery : IRequest<IDataResult<Student>>
+    public class GetStudentQuery : IRequest<IDataResult<StudentGetByIdDto>>
     {
         public int Id { get; set; }
 
-        public class GetStudentQueryHandler : IRequestHandler<GetStudentQuery, IDataResult<Student>>
+        public class GetStudentQueryHandler : IRequestHandler<GetStudentQuery, IDataResult<StudentGetByIdDto>>
         {
             private readonly IStudentRepository _studentRepository;
             private readonly IMediator _mediator;
@@ -29,10 +29,20 @@ namespace Business.Handlers.Students.Queries
             }
             [LogAspect(typeof(FileLogger))]
             [SecuredOperation(Priority = 1)]
-            public async Task<IDataResult<Student>> Handle(GetStudentQuery request, CancellationToken cancellationToken)
+            public async Task<IDataResult<StudentGetByIdDto>> Handle(GetStudentQuery request, CancellationToken cancellationToken)
             {
-                var student = await _studentRepository.GetAsync(p => p.Id == request.Id);
-                return new SuccessDataResult<Student>(student);
+                var student = await _studentRepository.GetAsync(StudentFiltersHelper.GetStudentQueryFilter(request));
+                if (student == null)
+                    return new ErrorDataResult<StudentGetByIdDto>("Kayıt bulunamadı.");
+
+                var dto = new StudentGetByIdDto
+                {
+                    Id = student.Id,
+                    PersonId = student.PersonId,
+                    StudentNumber = student.StudentNumber,
+                    EnrollmentDate = student.EnrollmentDate
+                };
+                return new SuccessDataResult<StudentGetByIdDto>(dto);
             }
         }
     }

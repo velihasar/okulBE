@@ -4,11 +4,8 @@ using Core.Entities;
 
 namespace Core.Entities.Concrete.Project
 {
-    public class Branch : IEntity
+    public class Branch : TenantEntity, IEntity
     {
-        public int Id { get; set; }
-
-        public int TenantId { get; set; }
 
         public string Name { get; set; } = null!;
 
@@ -16,9 +13,6 @@ namespace Core.Entities.Concrete.Project
 
         public string? Phone { get; set; }
 
-        public bool IsActive { get; set; }
-
-        public Tenant Tenant { get; set; } = null!;
 
         public ICollection<TenantUser> Users { get; set; } = new List<TenantUser>();
     }

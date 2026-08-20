@@ -1,5 +1,6 @@
 
 using Business.BusinessAspects;
+using Business.Handlers.Parents.FilterParent;
 using Core.Utilities.Results;
 using DataAccess.Abstract;
 using Entities.Concrete;
@@ -8,16 +9,15 @@ using System.Threading;
 using System.Threading.Tasks;
 using Core.Aspects.Autofac.Logging;
 using Core.CrossCuttingConcerns.Logging.Serilog.Loggers;
-using Core.Entities.Concrete.Project;
-
+using Core.Entities.Dtos.ParentDto;
 
 namespace Business.Handlers.Parents.Queries
 {
-    public class GetParentQuery : IRequest<IDataResult<Parent>>
+    public class GetParentQuery : IRequest<IDataResult<ParentGetByIdDto>>
     {
         public int Id { get; set; }
 
-        public class GetParentQueryHandler : IRequestHandler<GetParentQuery, IDataResult<Parent>>
+        public class GetParentQueryHandler : IRequestHandler<GetParentQuery, IDataResult<ParentGetByIdDto>>
         {
             private readonly IParentRepository _parentRepository;
             private readonly IMediator _mediator;
@@ -29,10 +29,18 @@ namespace Business.Handlers.Parents.Queries
             }
             [LogAspect(typeof(FileLogger))]
             [SecuredOperation(Priority = 1)]
-            public async Task<IDataResult<Parent>> Handle(GetParentQuery request, CancellationToken cancellationToken)
+            public async Task<IDataResult<ParentGetByIdDto>> Handle(GetParentQuery request, CancellationToken cancellationToken)
             {
-                var parent = await _parentRepository.GetAsync(p => p.Id == request.Id);
-                return new SuccessDataResult<Parent>(parent);
+                var parent = await _parentRepository.GetAsync(ParentFiltersHelper.GetParentQueryFilter(request));
+                if (parent == null)
+                    return new ErrorDataResult<ParentGetByIdDto>("Kayıt bulunamadı.");
+
+                var dto = new ParentGetByIdDto
+                {
+                    Id = parent.Id,
+                    PersonId = parent.PersonId
+                };
+                return new SuccessDataResult<ParentGetByIdDto>(dto);
             }
         }
     }

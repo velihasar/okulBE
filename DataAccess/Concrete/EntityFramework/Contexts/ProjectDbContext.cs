@@ -1,7 +1,12 @@
 using System;
+using System.Linq;
 using System.Reflection;
+using System.Threading;
+using System.Threading.Tasks;
+using Core.Entities;
 using Core.Entities.Concrete;
 using Core.Entities.Concrete.Project;
+using Core.Extensions;
 using Entities.Concrete;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -62,9 +67,62 @@ namespace DataAccess.Concrete.EntityFramework.Contexts
         public DbSet<Teacher> Teachers { get; set; }
         public DbSet<Parent> Parents { get; set; }
         public DbSet<StudentParent> StudentParents { get; set; }
-        public DbSet<TenantUser> TenantUsers { get; set; }
 
         protected IConfiguration Configuration { get; }
+
+        public override int SaveChanges()
+        {
+            SetAuditAndTenantFields();
+            return base.SaveChanges();
+        }
+
+        public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+        {
+            SetAuditAndTenantFields();
+            return base.SaveChangesAsync(cancellationToken);
+        }
+
+        private void SetAuditAndTenantFields()
+        {
+            var userId = UserInfoExtensions.GetUserIdOrZero();
+            var tenantId = UserInfoExtensions.GetTenantIdOrZero();
+            var now = DateTime.Now;
+
+            foreach (var entry in ChangeTracker.Entries())
+            {
+                if (entry.Entity is BaseEntity baseEntity)
+                {
+                    if (entry.State == EntityState.Added)
+                    {
+                        if (!baseEntity.CreatedDate.HasValue)
+                            baseEntity.CreatedDate = now;
+
+                        if (!baseEntity.CreatedBy.HasValue && userId > 0)
+                            baseEntity.CreatedBy = userId;
+
+                        if (!baseEntity.IsActive.HasValue)
+                            baseEntity.IsActive = true;
+
+                        if (!baseEntity.IsDeleted.HasValue)
+                            baseEntity.IsDeleted = false;
+                    }
+                    else if (entry.State == EntityState.Modified)
+                    {
+                        baseEntity.UpdatedDate = now;
+                        if (userId > 0)
+                            baseEntity.UpdatedBy = userId;
+                    }
+                }
+
+                if (entry.Entity is TenantEntity tenantEntity)
+                {
+                    if (entry.State == EntityState.Added && tenantEntity.TenantId <= 0 && tenantId > 0)
+                    {
+                        tenantEntity.TenantId = tenantId;
+                    }
+                }
+            }
+        }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

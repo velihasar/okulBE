@@ -1,6 +1,7 @@
 
 using Business.BusinessAspects;
 using Business.Constants;
+using Business.Handlers.Parents.FilterParent;
 using Core.Aspects.Autofac.Caching;
 using Core.Aspects.Autofac.Logging;
 using Core.Aspects.Autofac.Validation;
@@ -14,21 +15,20 @@ using System.Threading.Tasks;
 using System.Linq;
 using Business.Handlers.Parents.ValidationRules;
 using Core.Entities.Concrete.Project;
+using Core.Entities.Dtos.ParentDto;
+using Core.Extensions;
 
 namespace Business.Handlers.Parents.Commands
 {
     /// <summary>
     /// 
     /// </summary>
-    public class CreateParentCommand : IRequest<IResult>
+    public class CreateParentCommand : IRequest<IDataResult<ParentCreateResponseDto>>
     {
-
-        public int TenantId { get; set; }
         public int PersonId { get; set; }
-        public bool IsActive { get; set; }
 
 
-        public class CreateParentCommandHandler : IRequestHandler<CreateParentCommand, IResult>
+        public class CreateParentCommandHandler : IRequestHandler<CreateParentCommand, IDataResult<ParentCreateResponseDto>>
         {
             private readonly IParentRepository _parentRepository;
             private readonly IMediator _mediator;
@@ -42,24 +42,36 @@ namespace Business.Handlers.Parents.Commands
             [CacheRemoveAspect("Get")]
             [LogAspect(typeof(FileLogger))]
             [SecuredOperation(Priority = 1)]
-            public async Task<IResult> Handle(CreateParentCommand request, CancellationToken cancellationToken)
+            public async Task<IDataResult<ParentCreateResponseDto>> Handle(CreateParentCommand request, CancellationToken cancellationToken)
             {
-                var isThereParentRecord = _parentRepository.Query().Any(u => u.TenantId == request.TenantId);
+                var tenantId = UserInfoExtensions.GetTenantIdOrZero();
+                var userId = UserInfoExtensions.GetUserIdOrZero();
 
-                if (isThereParentRecord == true)
-                    return new ErrorResult(Messages.NameAlreadyExist);
+                var isThereParentRecord = _parentRepository.Query().Any(ParentFiltersHelper.CreateParentCommandFilter(request));
+
+                if (isThereParentRecord)
+                    return new ErrorDataResult<ParentCreateResponseDto>(Messages.NameAlreadyExist);
 
                 var addedParent = new Parent
                 {
-                    TenantId = request.TenantId,
+                    TenantId = tenantId,
                     PersonId = request.PersonId,
-                    IsActive = request.IsActive,
-
+                    IsActive = true,
+                    IsDeleted = false,
+                    CreatedBy = userId > 0 ? userId : null,
+                    CreatedDate = System.DateTime.Now
                 };
 
                 _parentRepository.Add(addedParent);
                 await _parentRepository.SaveChangesAsync();
-                return new SuccessResult(Messages.Added);
+
+                var dto = new ParentCreateResponseDto
+                {
+                    Id = addedParent.Id,
+                    PersonId = addedParent.PersonId
+                };
+
+                return new SuccessDataResult<ParentCreateResponseDto>(dto, Messages.Added);
             }
         }
     }

@@ -1,6 +1,7 @@
 
 using Business.BusinessAspects;
 using Business.Constants;
+using Business.Handlers.Students.FilterStudent;
 using Core.Aspects.Autofac.Caching;
 using Core.Aspects.Autofac.Logging;
 using Core.Aspects.Autofac.Validation;
@@ -14,23 +15,23 @@ using System.Threading.Tasks;
 using System.Linq;
 using Business.Handlers.Students.ValidationRules;
 using Core.Entities.Concrete.Project;
+using Core.Entities.Dtos.StudentDto;
+using Core.Extensions;
 
 namespace Business.Handlers.Students.Commands
 {
     /// <summary>
     /// 
     /// </summary>
-    public class CreateStudentCommand : IRequest<IResult>
+    public class CreateStudentCommand : IRequest<IDataResult<StudentCreateResponseDto>>
     {
 
-        public int TenantId { get; set; }
         public int PersonId { get; set; }
         public string StudentNumber { get; set; }
         public System.DateTime EnrollmentDate { get; set; }
-        public bool IsActive { get; set; }
 
 
-        public class CreateStudentCommandHandler : IRequestHandler<CreateStudentCommand, IResult>
+        public class CreateStudentCommandHandler : IRequestHandler<CreateStudentCommand, IDataResult<StudentCreateResponseDto>>
         {
             private readonly IStudentRepository _studentRepository;
             private readonly IMediator _mediator;
@@ -44,26 +45,40 @@ namespace Business.Handlers.Students.Commands
             [CacheRemoveAspect("Get")]
             [LogAspect(typeof(FileLogger))]
             [SecuredOperation(Priority = 1)]
-            public async Task<IResult> Handle(CreateStudentCommand request, CancellationToken cancellationToken)
+            public async Task<IDataResult<StudentCreateResponseDto>> Handle(CreateStudentCommand request, CancellationToken cancellationToken)
             {
-                var isThereStudentRecord = _studentRepository.Query().Any(u => u.TenantId == request.TenantId);
+                var tenantId = UserInfoExtensions.GetTenantIdOrZero();
+                var userId = UserInfoExtensions.GetUserIdOrZero();
 
-                if (isThereStudentRecord == true)
-                    return new ErrorResult(Messages.NameAlreadyExist);
+                var isThereStudentRecord = _studentRepository.Query().Any(StudentFiltersHelper.CreateStudentCommandFilter(request));
+
+                if (isThereStudentRecord)
+                    return new ErrorDataResult<StudentCreateResponseDto>(Messages.NameAlreadyExist);
 
                 var addedStudent = new Student
                 {
-                    TenantId = request.TenantId,
+                    TenantId = tenantId,
                     PersonId = request.PersonId,
                     StudentNumber = request.StudentNumber,
                     EnrollmentDate = request.EnrollmentDate,
-                    IsActive = request.IsActive,
-
+                    IsActive = true,
+                    IsDeleted = false,
+                    CreatedBy = userId > 0 ? userId : null,
+                    CreatedDate = System.DateTime.Now
                 };
 
                 _studentRepository.Add(addedStudent);
                 await _studentRepository.SaveChangesAsync();
-                return new SuccessResult(Messages.Added);
+
+                var dto = new StudentCreateResponseDto
+                {
+                    Id = addedStudent.Id,
+                    PersonId = addedStudent.PersonId,
+                    StudentNumber = addedStudent.StudentNumber,
+                    EnrollmentDate = addedStudent.EnrollmentDate
+                };
+
+                return new SuccessDataResult<StudentCreateResponseDto>(dto, Messages.Added);
             }
         }
     }

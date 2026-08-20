@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using System.Security.Claims;
@@ -30,6 +30,11 @@ namespace Core.Extensions
         public static void AddRoles(this ICollection<Claim> claims, string[] roles)
         {
             roles.ToList().ForEach(role => claims.Add(new Claim(ClaimTypes.Role, role)));
+        }
+
+        public static void AddTenantId(this ICollection<Claim> claims, string tenantId)
+        {
+            claims.Add(new Claim("tenantid", tenantId));
         }
     }
 }

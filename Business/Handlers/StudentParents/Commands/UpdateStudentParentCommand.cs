@@ -1,6 +1,6 @@
-
 using Business.Constants;
 using Business.BusinessAspects;
+using Business.Handlers.StudentParents.FilterStudentParent;
 using Core.Aspects.Autofac.Caching;
 using Core.Aspects.Autofac.Logging;
 using Core.CrossCuttingConcerns.Logging.Serilog.Loggers;
@@ -13,20 +13,21 @@ using System.Threading.Tasks;
 using System.Linq;
 using Core.Aspects.Autofac.Validation;
 using Business.Handlers.StudentParents.ValidationRules;
-
+using Core.Entities.Dtos.StudentParentDto;
+using Core.Extensions;
 
 namespace Business.Handlers.StudentParents.Commands
 {
-
-
-    public class UpdateStudentParentCommand : IRequest<IResult>
+    public class UpdateStudentParentCommand : IRequest<IDataResult<StudentParentUpdateResponseDto>>
     {
+        public int Id { get; set; }
         public int StudentId { get; set; }
         public int ParentId { get; set; }
         public string Relationship { get; set; }
         public bool IsPrimary { get; set; }
+        public bool IsActive { get; set; }
 
-        public class UpdateStudentParentCommandHandler : IRequestHandler<UpdateStudentParentCommand, IResult>
+        public class UpdateStudentParentCommandHandler : IRequestHandler<UpdateStudentParentCommand, IDataResult<StudentParentUpdateResponseDto>>
         {
             private readonly IStudentParentRepository _studentParentRepository;
             private readonly IMediator _mediator;
@@ -41,21 +42,44 @@ namespace Business.Handlers.StudentParents.Commands
             [CacheRemoveAspect("Get")]
             [LogAspect(typeof(FileLogger))]
             [SecuredOperation(Priority = 1)]
-            public async Task<IResult> Handle(UpdateStudentParentCommand request, CancellationToken cancellationToken)
+            public async Task<IDataResult<StudentParentUpdateResponseDto>> Handle(UpdateStudentParentCommand request, CancellationToken cancellationToken)
             {
-                var isThereStudentParentRecord = await _studentParentRepository.GetAsync(u => u.StudentId == request.StudentId);
+                var isThereStudentParentRecord = await _studentParentRepository.GetAsync(StudentParentFiltersHelper.UpdateStudentParentCommandFilter(request));
+                if (isThereStudentParentRecord == null)
+                    return new ErrorDataResult<StudentParentUpdateResponseDto>("Kayıt bulunamadı.");
 
+                var tenantId = UserInfoExtensions.GetTenantIdOrZero();
+                var userId = UserInfoExtensions.GetUserIdOrZero();
+                if (tenantId > 0)
+                {
+                    isThereStudentParentRecord.TenantId = tenantId;
+                }
+                if (userId > 0)
+                {
+                    isThereStudentParentRecord.UpdatedBy = userId;
+                }
+                isThereStudentParentRecord.UpdatedDate = System.DateTime.Now;
 
+                isThereStudentParentRecord.StudentId = request.StudentId;
                 isThereStudentParentRecord.ParentId = request.ParentId;
                 isThereStudentParentRecord.Relationship = request.Relationship;
                 isThereStudentParentRecord.IsPrimary = request.IsPrimary;
-
+                isThereStudentParentRecord.IsActive = request.IsActive;
 
                 _studentParentRepository.Update(isThereStudentParentRecord);
                 await _studentParentRepository.SaveChangesAsync();
-                return new SuccessResult(Messages.Updated);
+
+                var dto = new StudentParentUpdateResponseDto
+                {
+                    Id = isThereStudentParentRecord.Id,
+                    StudentId = isThereStudentParentRecord.StudentId,
+                    ParentId = isThereStudentParentRecord.ParentId,
+                    Relationship = isThereStudentParentRecord.Relationship,
+                    IsPrimary = isThereStudentParentRecord.IsPrimary
+                };
+
+                return new SuccessDataResult<StudentParentUpdateResponseDto>(dto, Messages.Updated);
             }
         }
     }
 }
-
