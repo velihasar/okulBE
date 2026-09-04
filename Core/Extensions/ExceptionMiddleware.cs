@@ -40,8 +40,7 @@ namespace Core.Extensions
             string message;
             
             // HATA AYIKLAMA İÇİN LOG EKLENDİ (Console log for dev)
-            Console.WriteLine($"[Global Exception]: {e.Message}");
-            Console.WriteLine(e.StackTrace);
+            Console.WriteLine($"[Global Exception]: {e}");
 
             // Database constraint errors - En önce kontrol et
             if (e is DbUpdateException dbEx)

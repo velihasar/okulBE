@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Linq;
 using Castle.DynamicProxy;
 using Core.CrossCuttingConcerns.Logging;
@@ -38,18 +38,36 @@ namespace Core.Aspects.Autofac.Exception
             logDetailWithException.ExceptionMessage = e is AggregateException
                 ? string.Join(Environment.NewLine, (e as AggregateException).InnerExceptions.Select(x => x.Message))
                 : e.ToString();
-            _loggerServiceBase.Error(JsonConvert.SerializeObject(logDetailWithException));
+
+            var serializerSettings = new JsonSerializerSettings
+            {
+                ReferenceLoopHandling = ReferenceLoopHandling.Ignore,
+                Error = (sender, args) => { args.ErrorContext.Handled = true; }
+            };
+            _loggerServiceBase.Error(JsonConvert.SerializeObject(logDetailWithException, serializerSettings));
         }
 
         private LogDetailWithException GetLogDetail(IInvocation invocation)
         {
-            var logParameters = invocation.Arguments.Select((t, i) => new LogParameter
+            var logParameters = invocation.Arguments.Select((t, i) =>
             {
-                Name = invocation.GetConcreteMethod().GetParameters()[i].Name,
-                Value = t,
-                Type = t.GetType().Name
-            })
-                .ToList();
+                object arg = t;
+                if (arg is Microsoft.AspNetCore.Http.IFormFile file)
+                {
+                    arg = $"[IFormFile: {file.FileName}]";
+                }
+                else if (arg is System.IO.Stream)
+                {
+                    arg = "[Stream]";
+                }
+                return new LogParameter
+                {
+                    Name = invocation.GetConcreteMethod().GetParameters()[i].Name,
+                    Value = arg,
+                    Type = t?.GetType().Name
+                };
+            }).ToList();
+
             var logDetailWithException = new LogDetailWithException
             {
                 MethodName = invocation.Method.Name,

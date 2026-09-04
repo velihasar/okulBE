@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using Castle.DynamicProxy;
 using Core.CrossCuttingConcerns.Logging;
@@ -41,11 +41,21 @@ namespace Core.Aspects.Autofac.Logging
             var logParameters = new List<LogParameter>();
             for (var i = 0; i < invocation.Arguments.Length; i++)
             {
+                var arg = invocation.Arguments[i];
+                if (arg is Microsoft.AspNetCore.Http.IFormFile file)
+                {
+                    arg = $"[IFormFile: {file.FileName}]";
+                }
+                else if (arg is System.IO.Stream)
+                {
+                    arg = "[Stream]";
+                }
+
                 logParameters.Add(new LogParameter
                 {
                     Name = invocation.GetConcreteMethod().GetParameters()[i].Name,
-                    Value = invocation.Arguments[i],
-                    Type = invocation.Arguments[i].GetType().Name,
+                    Value = arg,
+                    Type = invocation.Arguments[i]?.GetType().Name,
                 });
             }
 
@@ -58,7 +68,13 @@ namespace Core.Aspects.Autofac.Logging
                     ? "?"
                     : _httpContextAccessor.HttpContext.User.Identity.Name
             };
-            return JsonConvert.SerializeObject(logDetail);
+
+            var serializerSettings = new JsonSerializerSettings
+            {
+                ReferenceLoopHandling = ReferenceLoopHandling.Ignore,
+                Error = (sender, args) => { args.ErrorContext.Handled = true; }
+            };
+            return JsonConvert.SerializeObject(logDetail, serializerSettings);
         }
     }
 }

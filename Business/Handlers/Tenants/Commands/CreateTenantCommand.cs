@@ -29,15 +29,20 @@ namespace Business.Handlers.Tenants.Commands
         public string Name { get; set; }
         public string Code { get; set; }
         public string LogoUrl { get; set; }
+        [System.Text.Json.Serialization.JsonIgnore]
+        [Newtonsoft.Json.JsonIgnore]
+        public Microsoft.AspNetCore.Http.IFormFile Logo { get; set; }
 
 
         public class CreateTenantCommandHandler : IRequestHandler<CreateTenantCommand, IDataResult<TenantCreateResponseDto>>
         {
             private readonly ITenantRepository _tenantRepository;
+            private readonly Core.Services.IMinioService _minioService;
             private readonly IMediator _mediator;
-            public CreateTenantCommandHandler(ITenantRepository tenantRepository, IMediator mediator)
+            public CreateTenantCommandHandler(ITenantRepository tenantRepository, Core.Services.IMinioService minioService, IMediator mediator)
             {
                 _tenantRepository = tenantRepository;
+                _minioService = minioService;
                 _mediator = mediator;
             }
 
@@ -54,11 +59,27 @@ namespace Business.Handlers.Tenants.Commands
                 if (isThereTenantRecord)
                     return new ErrorDataResult<TenantCreateResponseDto>(Messages.NameAlreadyExist);
 
+                string logoUrl = request.LogoUrl ?? "";
+                if (request.Logo != null)
+                {
+                    try
+                    {
+                        using (var stream = request.Logo.OpenReadStream())
+                        {
+                            logoUrl = await _minioService.UploadFileAsync(stream, request.Logo.FileName);
+                        }
+                    }
+                    catch (System.Exception ex)
+                    {
+                        return new ErrorDataResult<TenantCreateResponseDto>($"Logo yükleme hatası: {ex.Message}");
+                    }
+                }
+
                 var addedTenant = new Tenant
                 {
                     Name = request.Name,
                     Code = request.Code,
-                    LogoUrl = request.LogoUrl,
+                    LogoUrl = logoUrl,
                     IsActive = true,
                     IsDeleted = false,
                     CreatedBy = userId > 0 ? userId : null,

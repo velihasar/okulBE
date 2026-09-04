@@ -39,6 +39,24 @@ namespace Business.Services.Minio
 					await _minioClient.MakeBucketAsync(new MakeBucketArgs().WithBucket(_bucketName));
 				}
 
+				// Set public read policy on bucket so images can be viewed publicly in browser img tags
+				try
+				{
+					string policy = $@"{{
+						""Version"": ""2012-10-17"",
+						""Statement"": [
+							{{
+								""Effect"": ""Allow"",
+								""Principal"": {{""AWS"": [""*""]}},
+								""Action"": [""s3:GetObject""],
+								""Resource"": [""arn:aws:s3:::{_bucketName}/*""]
+							}}
+						]
+					}}";
+					await _minioClient.SetPolicyAsync(new SetPolicyArgs().WithBucket(_bucketName).WithPolicy(policy));
+				}
+				catch { /* Policy set error ignored if already set */ }
+
 				// Generate unique file name
 				string uniqueFileName = $"{Guid.NewGuid()}_{fileName}";
 
@@ -50,6 +68,11 @@ namespace Business.Services.Minio
 				else if (fileName.EndsWith(".gif"))
 					contentType = "image/gif";
 
+				if (fileStream.CanSeek)
+				{
+					fileStream.Position = 0;
+				}
+
 				// Upload file
 				await _minioClient.PutObjectAsync(
 					new PutObjectArgs()
@@ -60,11 +83,15 @@ namespace Business.Services.Minio
 						.WithContentType(contentType)
 				);
 
-				// Return only the unique filename
-				return uniqueFileName;
+				// Return relative path with bucket
+				return $"/{_bucketName}/{uniqueFileName}";
 			}
 			catch (Exception ex)
 			{
+				if (ex.ToString().Contains("127.0.0.1") || ex.ToString().Contains("refused") || ex.ToString().Contains("reddetti"))
+				{
+					throw new ApplicationException("MinIO servisine bağlanılamadı (127.0.0.1:9000). Lütfen MinIO servisinin açık olduğundan emin olun.");
+				}
 				throw new Exception($"Error uploading file to MinIO: {ex.Message}", ex);
 			}
 		}

@@ -1,4 +1,4 @@
-﻿using System.Threading.Tasks;
+using System.Threading.Tasks;
 using Business.Handlers.Authorizations.Commands;
 using Business.Handlers.Authorizations.Queries;
 using Business.Handlers.Users.Commands;
@@ -114,10 +114,10 @@ namespace WebAPI.Controllers
             return GetResponseOnlyResultMessage(await Mediator.Send(verifyCid));
         }
 
-        /// <summary>
-        /// Token decode test
-        /// </summary>
-        /// <returns></returns>
+        // /// <summary>
+        // /// Token decode test
+        // /// </summary>
+        // /// <returns></returns>
         //[Consumes("application/json")]
         //[Produces("application/json", "text/plain")]
         //[ProducesResponseType(StatusCodes.Status200OK, Type = typeof(string))]

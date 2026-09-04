@@ -25,16 +25,21 @@ namespace Business.Handlers.Tenants.Commands
         public string Name { get; set; }
         public string Code { get; set; }
         public string LogoUrl { get; set; }
+        [System.Text.Json.Serialization.JsonIgnore]
+        [Newtonsoft.Json.JsonIgnore]
+        public Microsoft.AspNetCore.Http.IFormFile Logo { get; set; }
         public bool IsActive { get; set; }
 
         public class UpdateTenantCommandHandler : IRequestHandler<UpdateTenantCommand, IDataResult<TenantUpdateResponseDto>>
         {
             private readonly ITenantRepository _tenantRepository;
+            private readonly Core.Services.IMinioService _minioService;
             private readonly IMediator _mediator;
 
-            public UpdateTenantCommandHandler(ITenantRepository tenantRepository, IMediator mediator)
+            public UpdateTenantCommandHandler(ITenantRepository tenantRepository, Core.Services.IMinioService minioService, IMediator mediator)
             {
                 _tenantRepository = tenantRepository;
+                _minioService = minioService;
                 _mediator = mediator;
             }
 
@@ -57,7 +62,26 @@ namespace Business.Handlers.Tenants.Commands
 
                 isThereTenantRecord.Name = request.Name;
                 isThereTenantRecord.Code = request.Code;
-                isThereTenantRecord.LogoUrl = request.LogoUrl;
+
+                if (request.Logo != null)
+                {
+                    try
+                    {
+                        using (var stream = request.Logo.OpenReadStream())
+                        {
+                            isThereTenantRecord.LogoUrl = await _minioService.UploadFileAsync(stream, request.Logo.FileName);
+                        }
+                    }
+                    catch (System.Exception ex)
+                    {
+                        return new ErrorDataResult<TenantUpdateResponseDto>($"Logo yükleme hatası: {ex.Message}");
+                    }
+                }
+                else if (request.LogoUrl != null)
+                {
+                    isThereTenantRecord.LogoUrl = request.LogoUrl;
+                }
+
                 isThereTenantRecord.IsActive = request.IsActive;
 
                 _tenantRepository.Update(isThereTenantRecord);

@@ -1,4 +1,4 @@
-﻿using System.Diagnostics;
+using System.Diagnostics;
 using System.Reflection;
 using Core.ApiDoc;
 using Core.CrossCuttingConcerns.Caching;
@@ -58,6 +58,9 @@ namespace Core.DependencyResolvers
                     // },
                 });
 
+                c.MapType<IFormFile>(() => new OpenApiSchema { Type = "string", Format = "binary" });
+                c.CustomSchemaIds(x => x.FullName);
+
                 c.OperationFilter<AddAuthHeaderOperationFilter>();
                 c.AddSecurityDefinition("bearer", new OpenApiSecurityScheme
                 {
@@ -67,6 +70,12 @@ namespace Core.DependencyResolvers
                     In = ParameterLocation.Header,
                     Scheme = "bearer"
                 });
+
+                var xmlFile = System.IO.Path.ChangeExtension(Assembly.GetEntryAssembly()?.Location ?? Assembly.GetExecutingAssembly().Location, ".xml");
+                if (System.IO.File.Exists(xmlFile))
+                {
+                    c.IncludeXmlComments(xmlFile);
+                }
             });
         }
     }

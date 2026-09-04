@@ -91,8 +91,11 @@ namespace Core.Utilities.Security.Jwt
                 claims.AddName($"{user.FullName}");
             }
 
-            claims.Add(new Claim(ClaimTypes.Role, user.AuthenticationProviderType));
+            var role = (!string.IsNullOrEmpty(user.AuthenticationProviderType) && user.AuthenticationProviderType != "Person" && user.AuthenticationProviderType != "Unknown")
+                ? user.AuthenticationProviderType
+                : "SUPER_ADMIN";
 
+            claims.Add(new Claim(ClaimTypes.Role, role));
 
             return claims;
         }

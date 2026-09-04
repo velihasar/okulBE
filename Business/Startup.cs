@@ -147,6 +147,7 @@ namespace Business
 
             // Minio Ayarları
             services.Configure<Core.Configuration.MinioSettings>(Configuration.GetSection("MinioSettings"));
+            services.AddTransient<Core.Services.IMinioService, Business.Services.Minio.MinioService>();
 
             // FCM Ayarları
             services.Configure<Core.Configuration.FcmSettings>(Configuration.GetSection("FcmSettings"));

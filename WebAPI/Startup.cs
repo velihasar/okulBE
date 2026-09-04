@@ -27,6 +27,8 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.IdentityModel.Tokens;
 using Swashbuckle.AspNetCore.SwaggerUI;
+using Microsoft.OpenApi.Models;
+using Microsoft.AspNetCore.Http;
 using ConfigurationManager = Business.ConfigurationManager;
 
 namespace WebAPI
@@ -142,11 +144,6 @@ namespace WebAPI
                         }
                     };
                 });
-            services.AddSwaggerGen(c =>
-            {
-                c.IncludeXmlComments(Path.ChangeExtension(typeof(Startup).Assembly.Location, ".xml"));
-            });
-
             services.AddTransient<FileLogger>();
             services.AddTransient<ElasticSearchLogger>();
             services.AddTransient<PostgreSqlLogger>();
