@@ -40,6 +40,7 @@ namespace Business.Handlers.People.Queries
                 var dtos = list.Select(x => new PersonGetAllDto
                 {
                     Id = x.Id,
+                    TenantId = x.TenantId,
                     UserId = x.UserId,
                     FirstName = x.FirstName,
                     LastName = x.LastName,

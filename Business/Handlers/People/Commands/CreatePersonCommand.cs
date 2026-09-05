@@ -25,7 +25,7 @@ namespace Business.Handlers.People.Commands
     /// </summary>
     public class CreatePersonCommand : IRequest<IDataResult<PersonCreateResponseDto>>
     {
-
+        public int? TenantId { get; set; }
         public int? UserId { get; set; }
         public string FirstName { get; set; }
         public string LastName { get; set; }
@@ -38,10 +38,13 @@ namespace Business.Handlers.People.Commands
         public class CreatePersonCommandHandler : IRequestHandler<CreatePersonCommand, IDataResult<PersonCreateResponseDto>>
         {
             private readonly IPersonRepository _personRepository;
+            private readonly ITenantRepository _tenantRepository;
             private readonly IMediator _mediator;
-            public CreatePersonCommandHandler(IPersonRepository personRepository, IMediator mediator)
+
+            public CreatePersonCommandHandler(IPersonRepository personRepository, ITenantRepository tenantRepository, IMediator mediator)
             {
                 _personRepository = personRepository;
+                _tenantRepository = tenantRepository;
                 _mediator = mediator;
             }
 
@@ -51,8 +54,15 @@ namespace Business.Handlers.People.Commands
             [SecuredOperation(Priority = 1)]
             public async Task<IDataResult<PersonCreateResponseDto>> Handle(CreatePersonCommand request, CancellationToken cancellationToken)
             {
-                var tenantId = UserInfoExtensions.GetTenantIdOrZero();
+                var userTenantId = UserInfoExtensions.GetTenantIdOrZero();
                 var userId = UserInfoExtensions.GetUserIdOrZero();
+
+                int targetTenantId = userTenantId > 0 ? userTenantId : (request.TenantId ?? 0);
+
+                if (targetTenantId <= 0)
+                {
+                    return new ErrorDataResult<PersonCreateResponseDto>("SuperAdmin olarak işlem yapmaktasınız. Lütfen geçerli bir kurum (okul) seçiniz.");
+                }
 
                 var isTherePersonRecord = _personRepository.Query().Any(PersonFiltersHelper.CreatePersonCommandFilter(request));
 
@@ -61,7 +71,7 @@ namespace Business.Handlers.People.Commands
 
                 var addedPerson = new Person
                 {
-                    TenantId = tenantId,
+                    TenantId = targetTenantId,
                     UserId = request.UserId,
                     FirstName = request.FirstName,
                     LastName = request.LastName,

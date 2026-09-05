@@ -38,6 +38,7 @@ namespace Business.Handlers.People.Queries
                 var dto = new PersonGetByIdDto
                 {
                     Id = person.Id,
+                    TenantId = person.TenantId,
                     UserId = person.UserId,
                     FirstName = person.FirstName,
                     LastName = person.LastName,

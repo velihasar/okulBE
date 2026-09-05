@@ -38,6 +38,7 @@ namespace Business.Handlers.Students.Queries
                 var dto = new StudentGetByIdDto
                 {
                     Id = student.Id,
+                    TenantId = student.TenantId,
                     PersonId = student.PersonId,
                     StudentNumber = student.StudentNumber,
                     EnrollmentDate = student.EnrollmentDate

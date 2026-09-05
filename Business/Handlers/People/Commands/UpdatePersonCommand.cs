@@ -22,6 +22,7 @@ namespace Business.Handlers.People.Commands
     public class UpdatePersonCommand : IRequest<IDataResult<PersonUpdateResponseDto>>
     {
         public int Id { get; set; }
+        public int? TenantId { get; set; }
         public int? UserId { get; set; }
         public string FirstName { get; set; }
         public string LastName { get; set; }
@@ -57,6 +58,10 @@ namespace Business.Handlers.People.Commands
                 if (tenantId > 0)
                 {
                     isTherePersonRecord.TenantId = tenantId;
+                }
+                else if (request.TenantId.HasValue && request.TenantId.Value > 0)
+                {
+                    isTherePersonRecord.TenantId = request.TenantId.Value;
                 }
                 if (userId > 0)
                 {

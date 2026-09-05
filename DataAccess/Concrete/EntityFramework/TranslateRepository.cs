@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Core.DataAccess.EntityFramework;
@@ -35,10 +35,12 @@ namespace DataAccess.Concrete.EntityFramework
 
         public async Task<string> GetTranslatesByLang(string langCode)
         {
-            var data = await (from trs in Context.Translates
+            var list = await (from trs in Context.Translates
                 join lng in Context.Languages on trs.LangId equals lng.Id
                 where lng.Code == langCode
-                select trs).ToDictionaryAsync(x => (string)x.Code, x => (string)x.Value);
+                select new { Code = (string)trs.Code, Value = (string)trs.Value }).ToListAsync();
+
+            var data = list.GroupBy(x => x.Code).ToDictionary(g => g.Key, g => g.First().Value);
 
             var str = JsonConvert.SerializeObject(data);
             return str;
@@ -48,7 +50,7 @@ namespace DataAccess.Concrete.EntityFramework
         {
             var list = await Context.Translates.Where(x => x.Code == lang).ToListAsync();
 
-            return list.ToDictionary(x => x.Code, x => x.Value);
+            return list.GroupBy(x => x.Code).ToDictionary(g => g.Key, g => g.First().Value);
         }
     }
 }

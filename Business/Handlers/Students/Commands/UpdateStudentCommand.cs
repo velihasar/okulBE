@@ -22,6 +22,7 @@ namespace Business.Handlers.Students.Commands
     public class UpdateStudentCommand : IRequest<IDataResult<StudentUpdateResponseDto>>
     {
         public int Id { get; set; }
+        public int? TenantId { get; set; }
         public int PersonId { get; set; }
         public string StudentNumber { get; set; }
         public System.DateTime EnrollmentDate { get; set; }
@@ -53,6 +54,10 @@ namespace Business.Handlers.Students.Commands
                 if (tenantId > 0)
                 {
                     isThereStudentRecord.TenantId = tenantId;
+                }
+                else if (request.TenantId.HasValue && request.TenantId.Value > 0)
+                {
+                    isThereStudentRecord.TenantId = request.TenantId.Value;
                 }
                 if (userId > 0)
                 {

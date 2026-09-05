@@ -15,5 +15,7 @@ namespace Core.Entities.Concrete.Project
         public Person Person { get; set; } = null!;
 
         public ICollection<StudentParent> Parents { get; set; } = new List<StudentParent>();
+
+        public ICollection<StudentBranch> StudentBranches { get; set; } = new List<StudentBranch>();
     }
 }

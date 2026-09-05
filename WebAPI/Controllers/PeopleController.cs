@@ -115,5 +115,57 @@ namespace WebAPI.Controllers
             }
             return BadRequest(result.Message);
         }
+
+        /// <summary>
+        /// Upload Person Photo to MinIO.
+        /// </summary>
+        [Consumes("multipart/form-data")]
+        [HttpPost("upload-photo")]
+        public async Task<IActionResult> UploadPhoto(IFormFile file)
+        {
+            if (file == null || file.Length == 0)
+                return BadRequest("Dosya yüklenmedi.");
+
+            var minioService = (Core.Services.IMinioService)HttpContext.RequestServices.GetService(typeof(Core.Services.IMinioService));
+            if (minioService == null)
+                return StatusCode(500, "MinioService bulunamadı.");
+
+            using (var stream = file.OpenReadStream())
+            {
+                var photoUrl = await minioService.UploadFileAsync(stream, file.FileName);
+                return Ok(new { photoUrl, url = photoUrl });
+            }
+        }
+
+        /// <summary>
+        /// Get Person photo from MinIO
+        /// </summary>
+        [AllowAnonymous]
+        [HttpGet("photo/{*fileName}")]
+        public async Task<IActionResult> GetPhoto(string fileName)
+        {
+            try
+            {
+                if (string.IsNullOrEmpty(fileName)) return NotFound();
+                var cleanName = System.IO.Path.GetFileName(fileName);
+                var minioService = (Core.Services.IMinioService)HttpContext.RequestServices.GetService(typeof(Core.Services.IMinioService));
+                if (minioService == null) return NotFound();
+
+                var stream = await minioService.GetFileAsync(cleanName);
+                if (stream == null) return NotFound();
+
+                string contentType = "image/png";
+                var lower = cleanName.ToLowerInvariant();
+                if (lower.EndsWith(".jpg") || lower.EndsWith(".jpeg")) contentType = "image/jpeg";
+                else if (lower.EndsWith(".gif")) contentType = "image/gif";
+                else if (lower.EndsWith(".webp")) contentType = "image/webp";
+
+                return File(stream, contentType);
+            }
+            catch
+            {
+                return NotFound();
+            }
+        }
     }
 }

@@ -493,6 +493,53 @@ namespace DataAccess.Migrations.Pg
                     b.ToTable("Students");
                 });
 
+            modelBuilder.Entity("Core.Entities.Concrete.Project.StudentBranch", b =>
+                {
+                    b.Property<int>("StudentId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("BranchId")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("CreatedBy")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("CreatedDate")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<int?>("DeletedBy")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("DeletedDate")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<int>("Id")
+                        .HasColumnType("integer");
+
+                    b.Property<bool?>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool?>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<int>("TenantId")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("UpdatedBy")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("UpdatedDate")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.HasKey("StudentId", "BranchId");
+
+                    b.HasIndex("BranchId");
+
+                    b.HasIndex("TenantId");
+
+                    b.ToTable("StudentBranches");
+                });
+
             modelBuilder.Entity("Core.Entities.Concrete.Project.StudentParent", b =>
                 {
                     b.Property<int>("StudentId")
@@ -595,6 +642,53 @@ namespace DataAccess.Migrations.Pg
                     b.HasIndex("TenantId");
 
                     b.ToTable("Teachers");
+                });
+
+            modelBuilder.Entity("Core.Entities.Concrete.Project.TeacherBranch", b =>
+                {
+                    b.Property<int>("TeacherId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("BranchId")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("CreatedBy")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("CreatedDate")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<int?>("DeletedBy")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("DeletedDate")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<int>("Id")
+                        .HasColumnType("integer");
+
+                    b.Property<bool?>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool?>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<int>("TenantId")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("UpdatedBy")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("UpdatedDate")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.HasKey("TeacherId", "BranchId");
+
+                    b.HasIndex("BranchId");
+
+                    b.HasIndex("TenantId");
+
+                    b.ToTable("TeacherBranches");
                 });
 
             modelBuilder.Entity("Core.Entities.Concrete.Project.Tenant", b =>
@@ -2166,6 +2260,33 @@ namespace DataAccess.Migrations.Pg
                     b.Navigation("Tenant");
                 });
 
+            modelBuilder.Entity("Core.Entities.Concrete.Project.StudentBranch", b =>
+                {
+                    b.HasOne("Core.Entities.Concrete.Project.Branch", "Branch")
+                        .WithMany("StudentBranches")
+                        .HasForeignKey("BranchId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Core.Entities.Concrete.Project.Student", "Student")
+                        .WithMany("StudentBranches")
+                        .HasForeignKey("StudentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Core.Entities.Concrete.Project.Tenant", "Tenant")
+                        .WithMany()
+                        .HasForeignKey("TenantId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Branch");
+
+                    b.Navigation("Student");
+
+                    b.Navigation("Tenant");
+                });
+
             modelBuilder.Entity("Core.Entities.Concrete.Project.StudentParent", b =>
                 {
                     b.HasOne("Core.Entities.Concrete.Project.Parent", "Parent")
@@ -2212,6 +2333,33 @@ namespace DataAccess.Migrations.Pg
                     b.Navigation("Tenant");
                 });
 
+            modelBuilder.Entity("Core.Entities.Concrete.Project.TeacherBranch", b =>
+                {
+                    b.HasOne("Core.Entities.Concrete.Project.Branch", "Branch")
+                        .WithMany("TeacherBranches")
+                        .HasForeignKey("BranchId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Core.Entities.Concrete.Project.Teacher", "Teacher")
+                        .WithMany("TeacherBranches")
+                        .HasForeignKey("TeacherId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Core.Entities.Concrete.Project.Tenant", "Tenant")
+                        .WithMany()
+                        .HasForeignKey("TenantId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Branch");
+
+                    b.Navigation("Teacher");
+
+                    b.Navigation("Tenant");
+                });
+
             modelBuilder.Entity("Core.Entities.Concrete.Project.TenantUser", b =>
                 {
                     b.HasOne("Core.Entities.Concrete.Project.Branch", "Branch")
@@ -2242,6 +2390,10 @@ namespace DataAccess.Migrations.Pg
 
             modelBuilder.Entity("Core.Entities.Concrete.Project.Branch", b =>
                 {
+                    b.Navigation("StudentBranches");
+
+                    b.Navigation("TeacherBranches");
+
                     b.Navigation("Users");
                 });
 
@@ -2262,6 +2414,13 @@ namespace DataAccess.Migrations.Pg
             modelBuilder.Entity("Core.Entities.Concrete.Project.Student", b =>
                 {
                     b.Navigation("Parents");
+
+                    b.Navigation("StudentBranches");
+                });
+
+            modelBuilder.Entity("Core.Entities.Concrete.Project.Teacher", b =>
+                {
+                    b.Navigation("TeacherBranches");
                 });
 
             modelBuilder.Entity("Core.Entities.Concrete.Project.Tenant", b =>

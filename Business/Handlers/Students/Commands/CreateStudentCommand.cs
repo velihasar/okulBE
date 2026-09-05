@@ -25,7 +25,7 @@ namespace Business.Handlers.Students.Commands
     /// </summary>
     public class CreateStudentCommand : IRequest<IDataResult<StudentCreateResponseDto>>
     {
-
+        public int? TenantId { get; set; }
         public int PersonId { get; set; }
         public string StudentNumber { get; set; }
         public System.DateTime EnrollmentDate { get; set; }
@@ -34,10 +34,13 @@ namespace Business.Handlers.Students.Commands
         public class CreateStudentCommandHandler : IRequestHandler<CreateStudentCommand, IDataResult<StudentCreateResponseDto>>
         {
             private readonly IStudentRepository _studentRepository;
+            private readonly ITenantRepository _tenantRepository;
             private readonly IMediator _mediator;
-            public CreateStudentCommandHandler(IStudentRepository studentRepository, IMediator mediator)
+
+            public CreateStudentCommandHandler(IStudentRepository studentRepository, ITenantRepository tenantRepository, IMediator mediator)
             {
                 _studentRepository = studentRepository;
+                _tenantRepository = tenantRepository;
                 _mediator = mediator;
             }
 
@@ -47,8 +50,15 @@ namespace Business.Handlers.Students.Commands
             [SecuredOperation(Priority = 1)]
             public async Task<IDataResult<StudentCreateResponseDto>> Handle(CreateStudentCommand request, CancellationToken cancellationToken)
             {
-                var tenantId = UserInfoExtensions.GetTenantIdOrZero();
+                var userTenantId = UserInfoExtensions.GetTenantIdOrZero();
                 var userId = UserInfoExtensions.GetUserIdOrZero();
+
+                int targetTenantId = userTenantId > 0 ? userTenantId : (request.TenantId ?? 0);
+
+                if (targetTenantId <= 0)
+                {
+                    return new ErrorDataResult<StudentCreateResponseDto>("SuperAdmin olarak işlem yapmaktasınız. Lütfen geçerli bir kurum (okul) seçiniz.");
+                }
 
                 var isThereStudentRecord = _studentRepository.Query().Any(StudentFiltersHelper.CreateStudentCommandFilter(request));
 
@@ -57,7 +67,7 @@ namespace Business.Handlers.Students.Commands
 
                 var addedStudent = new Student
                 {
-                    TenantId = tenantId,
+                    TenantId = targetTenantId,
                     PersonId = request.PersonId,
                     StudentNumber = request.StudentNumber,
                     EnrollmentDate = request.EnrollmentDate,

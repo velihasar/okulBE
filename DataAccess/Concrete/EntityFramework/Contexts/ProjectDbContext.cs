@@ -67,6 +67,8 @@ namespace DataAccess.Concrete.EntityFramework.Contexts
         public DbSet<Teacher> Teachers { get; set; }
         public DbSet<Parent> Parents { get; set; }
         public DbSet<StudentParent> StudentParents { get; set; }
+        public DbSet<StudentBranch> StudentBranches { get; set; }
+        public DbSet<TeacherBranch> TeacherBranches { get; set; }
 
         protected IConfiguration Configuration { get; }
 
@@ -140,6 +142,32 @@ namespace DataAccess.Concrete.EntityFramework.Contexts
                 .HasOne(sp => sp.Parent)
                 .WithMany(p => p.Students)
                 .HasForeignKey(sp => sp.ParentId);
+
+            modelBuilder.Entity<StudentBranch>()
+                .HasKey(sb => new { sb.StudentId, sb.BranchId });
+
+            modelBuilder.Entity<StudentBranch>()
+                .HasOne(sb => sb.Student)
+                .WithMany(s => s.StudentBranches)
+                .HasForeignKey(sb => sb.StudentId);
+
+            modelBuilder.Entity<StudentBranch>()
+                .HasOne(sb => sb.Branch)
+                .WithMany(b => b.StudentBranches)
+                .HasForeignKey(sb => sb.BranchId);
+
+            modelBuilder.Entity<TeacherBranch>()
+                .HasKey(tb => new { tb.TeacherId, tb.BranchId });
+
+            modelBuilder.Entity<TeacherBranch>()
+                .HasOne(tb => tb.Teacher)
+                .WithMany(t => t.TeacherBranches)
+                .HasForeignKey(tb => tb.TeacherId);
+
+            modelBuilder.Entity<TeacherBranch>()
+                .HasOne(tb => tb.Branch)
+                .WithMany(b => b.TeacherBranches)
+                .HasForeignKey(tb => tb.BranchId);
         }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)

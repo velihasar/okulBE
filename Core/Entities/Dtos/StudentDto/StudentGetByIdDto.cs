@@ -6,6 +6,7 @@ namespace Core.Entities.Dtos.StudentDto
     public class StudentGetByIdDto : IDto
     {
         public int Id { get; set; }
+        public int TenantId { get; set; }
         public int PersonId { get; set; }
         public string StudentNumber { get; set; }
         public DateTime EnrollmentDate { get; set; }

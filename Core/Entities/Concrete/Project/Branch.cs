@@ -15,5 +15,9 @@ namespace Core.Entities.Concrete.Project
 
 
         public ICollection<TenantUser> Users { get; set; } = new List<TenantUser>();
+
+        public ICollection<StudentBranch> StudentBranches { get; set; } = new List<StudentBranch>();
+
+        public ICollection<TeacherBranch> TeacherBranches { get; set; } = new List<TeacherBranch>();
     }
 }

@@ -74,8 +74,7 @@ namespace Business.Handlers.Users.Queries
                         return new SelectionItem
                         {
                             Id = ug.GroupId.ToString(),
-                            Label = g != null ? g.GroupName : $"Grup #{ug.GroupId}",
-                            IsSelected = true
+                            Label = g != null ? g.GroupName : $"Grup #{ug.GroupId}"
                         };
                     }).ToList();
 

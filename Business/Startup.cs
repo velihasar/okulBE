@@ -161,6 +161,8 @@ namespace Business
         public void ConfigureDevelopmentServices(IServiceCollection services)
         {
             ConfigureServices(services);
+            services.AddTransient<ITeacherBranchRepository, TeacherBranchRepository>();
+            services.AddTransient<IStudentBranchRepository, StudentBranchRepository>();
             services.AddTransient<ITenantUserRepository, TenantUserRepository>();
             services.AddTransient<ITenantRepository, TenantRepository>();
             services.AddTransient<ITeacherRepository, TeacherRepository>();
@@ -193,6 +195,8 @@ namespace Business
         public void ConfigureStagingServices(IServiceCollection services)
         {
             ConfigureServices(services);
+            services.AddTransient<ITeacherBranchRepository, TeacherBranchRepository>();
+            services.AddTransient<IStudentBranchRepository, StudentBranchRepository>();
             services.AddTransient<ITenantUserRepository, TenantUserRepository>();
             services.AddTransient<ITenantRepository, TenantRepository>();
             services.AddTransient<ITeacherRepository, TeacherRepository>();
@@ -223,6 +227,8 @@ namespace Business
         public void ConfigureProductionServices(IServiceCollection services)
         {
             ConfigureServices(services);
+            services.AddTransient<ITeacherBranchRepository, TeacherBranchRepository>();
+            services.AddTransient<IStudentBranchRepository, StudentBranchRepository>();
             services.AddTransient<ITenantUserRepository, TenantUserRepository>();
             services.AddTransient<ITenantRepository, TenantRepository>();
             services.AddTransient<ITeacherRepository, TeacherRepository>();

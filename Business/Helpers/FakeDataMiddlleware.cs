@@ -1,4 +1,4 @@
-﻿using System.Threading.Tasks;
+using System.Threading.Tasks;
 using Business.Fakes.Handlers.Languages;
 using Business.Fakes.Handlers.Translates;
 using Business.Handlers.Groups.Commands;
@@ -60,7 +60,7 @@ namespace Business.Helpers
             await mediator.Send(new CreateTranslateInternalCommand
             { LangId = 1, Code = "TranslateWords", Value = "Dil Çevirileri" });
             await mediator.Send(new CreateTranslateInternalCommand
-            { LangId = 1, Code = "TranslateWords", Value = "Translate Words" });
+            { LangId = 2, Code = "TranslateWords", Value = "Translate Words" });
             await mediator.Send(new CreateTranslateInternalCommand
             { LangId = 1, Code = "Management", Value = "Yönetim" });
             await mediator.Send(new CreateTranslateInternalCommand

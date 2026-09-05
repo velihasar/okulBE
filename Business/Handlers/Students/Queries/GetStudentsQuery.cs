@@ -40,6 +40,7 @@ namespace Business.Handlers.Students.Queries
                 var dtos = list.Select(x => new StudentGetAllDto
                 {
                     Id = x.Id,
+                    TenantId = x.TenantId,
                     PersonId = x.PersonId,
                     StudentNumber = x.StudentNumber,
                     EnrollmentDate = x.EnrollmentDate
