@@ -31,7 +31,6 @@ namespace Business.Handlers.Tenants.Queries
             }
 
             [PerformanceAspect(5)]
-            [CacheAspect(10)]
             [LogAspect(typeof(FileLogger))]
             [SecuredOperation(Priority = 1)]
             public async Task<IDataResult<IEnumerable<TenantGetAllDto>>> Handle(GetTenantsQuery request, CancellationToken cancellationToken)
@@ -42,7 +41,8 @@ namespace Business.Handlers.Tenants.Queries
                     Id = x.Id,
                     Name = x.Name,
                     Code = x.Code,
-                    LogoUrl = x.LogoUrl
+                    LogoUrl = x.LogoUrl,
+                    IsActive = x.IsActive
                 });
                 return new SuccessDataResult<IEnumerable<TenantGetAllDto>>(dtos);
             }

@@ -9,5 +9,8 @@ namespace Core.Entities.Dtos
         public string Password { get; set; }
         public bool Status { get; set; }
         public string RefreshToken { get; set; }
+        public int? TenantId { get; set; }
+        public string TenantName { get; set; }
+        public System.Collections.Generic.IEnumerable<SelectionItem> UserGroups { get; set; }
     }
 }

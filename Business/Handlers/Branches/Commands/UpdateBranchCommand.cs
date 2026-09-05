@@ -25,6 +25,7 @@ namespace Business.Handlers.Branches.Commands
     public class UpdateBranchCommand : IRequest<IDataResult<BranchUpdateResponseDto>>
     {
         public int Id { get; set; }
+        public int? TenantId { get; set; }
         public string Name { get; set; }
         public string Address { get; set; }
         public string Phone { get; set; }
@@ -51,12 +52,20 @@ namespace Business.Handlers.Branches.Commands
                 if (isThereBranchRecord == null)
                     return new ErrorDataResult<BranchUpdateResponseDto>("Kayıt bulunamadı.");
 
-                var tenantId = UserInfoExtensions.GetTenantIdOrZero();
+                var userTenantId = UserInfoExtensions.GetTenantIdOrZero();
                 var userId = UserInfoExtensions.GetUserIdOrZero();
-                if (tenantId > 0)
+                if (userTenantId > 0)
                 {
-                    isThereBranchRecord.TenantId = tenantId;
+                    if (isThereBranchRecord.TenantId != userTenantId)
+                    {
+                        return new ErrorDataResult<BranchUpdateResponseDto>("Bu şubeyi güncelleme yetkiniz bulunmuyor.");
+                    }
                 }
+                else if (request.TenantId.HasValue && request.TenantId.Value > 0)
+                {
+                    isThereBranchRecord.TenantId = request.TenantId.Value;
+                }
+
                 if (userId > 0)
                 {
                     isThereBranchRecord.UpdatedBy = userId;

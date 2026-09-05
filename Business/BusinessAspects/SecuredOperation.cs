@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.Linq;
 using System.Security;
 using Business.Constants;
@@ -38,12 +38,29 @@ namespace Business.BusinessAspects
                 throw new SecurityException(Messages.AuthorizationsDenied);
             }
 
+            var operationName = invocation.TargetType.ReflectedType.Name;
             var oprClaims = _cacheManager.Get<IEnumerable<string>>($"{CacheKeys.UserIdForClaim}={userId}");
 
-            var operationName = invocation.TargetType.ReflectedType.Name;
-            if (oprClaims.Contains(operationName))
+            if (oprClaims != null && oprClaims.Contains(operationName))
             {
                 return;
+            }
+
+            // Önbellekte yoksa veritabanından güncel yetkileri çekip tazele
+            if (int.TryParse(userId, out int uId))
+            {
+                var userRepository = ServiceTool.ServiceProvider.GetService<IUserRepository>();
+                if (userRepository != null)
+                {
+                    var freshClaims = userRepository.GetClaims(uId).Select(x => x.Name).ToList();
+                    _cacheManager.Add($"{CacheKeys.UserIdForClaim}={userId}", freshClaims);
+                    if (freshClaims.Contains(operationName))
+                    {
+                        return;
+                    }
+                    var claimsStr = freshClaims.Any() ? string.Join(", ", freshClaims) : "HİÇ YETKİ YOK";
+                    throw new SecurityException($"{Messages.AuthorizationsDenied} -> İstenen Yetki: '{operationName}', Kullanıcının DB Yetkileri: [{claimsStr}]");
+                }
             }
 
             throw new SecurityException(Messages.AuthorizationsDenied);

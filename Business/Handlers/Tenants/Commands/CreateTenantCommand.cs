@@ -29,6 +29,7 @@ namespace Business.Handlers.Tenants.Commands
         public string Name { get; set; }
         public string Code { get; set; }
         public string LogoUrl { get; set; }
+        public bool? IsActive { get; set; }
         [System.Text.Json.Serialization.JsonIgnore]
         [Newtonsoft.Json.JsonIgnore]
         public Microsoft.AspNetCore.Http.IFormFile Logo { get; set; }
@@ -80,7 +81,7 @@ namespace Business.Handlers.Tenants.Commands
                     Name = request.Name,
                     Code = request.Code,
                     LogoUrl = logoUrl,
-                    IsActive = true,
+                    IsActive = request.IsActive ?? true,
                     IsDeleted = false,
                     CreatedBy = userId > 0 ? userId : null,
                     CreatedDate = System.DateTime.Now

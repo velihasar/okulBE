@@ -56,6 +56,14 @@ namespace Business.Helpers
                     await groupRepository.SaveChangesAsync();
                 }
 
+                var tenantOwnerGroup = await groupRepository.GetAsync(g => g.GroupName == "KurumSahibi" || g.GroupName == "TenantAdmin" || g.GroupName == "Kurum Sahibi");
+                if (tenantOwnerGroup == null)
+                {
+                    tenantOwnerGroup = new Group { GroupName = "KurumSahibi" };
+                    groupRepository.Add(tenantOwnerGroup);
+                    await groupRepository.SaveChangesAsync();
+                }
+
                 if (userGroupRepository != null)
                 {
                     var userGroup = await userGroupRepository.GetAsync(ug => ug.UserId == 1 && ug.GroupId == superAdminGroup.Id);

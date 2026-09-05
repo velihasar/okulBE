@@ -25,6 +25,7 @@ namespace Business.Handlers.Branches.Commands
     /// </summary>
     public class CreateBranchCommand : IRequest<IDataResult<BranchCreateResponseDto>>
     {
+        public int? TenantId { get; set; }
         public string Name { get; set; }
         public string Address { get; set; }
         public string Phone { get; set; }
@@ -46,17 +47,24 @@ namespace Business.Handlers.Branches.Commands
             [SecuredOperation(Priority = 1)]
             public async Task<IDataResult<BranchCreateResponseDto>> Handle(CreateBranchCommand request, CancellationToken cancellationToken)
             {
-                var tenantId = UserInfoExtensions.GetTenantIdOrZero();
+                var userTenantId = UserInfoExtensions.GetTenantIdOrZero();
                 var userId = UserInfoExtensions.GetUserIdOrZero();
 
-                var isThereBranchRecord = _branchRepository.Query().Any(BranchFiltersHelper.CreateBranchCommandFilter(request));
+                int targetTenantId = userTenantId > 0 ? userTenantId : (request.TenantId ?? 0);
+
+                if (targetTenantId <= 0)
+                {
+                    return new ErrorDataResult<BranchCreateResponseDto>("Lütfen şubenin bağlı olacağı kurumu seçin.");
+                }
+
+                var isThereBranchRecord = _branchRepository.Query().Any(x => x.IsDeleted == false && x.TenantId == targetTenantId && x.Name == request.Name);
 
                 if (isThereBranchRecord)
                     return new ErrorDataResult<BranchCreateResponseDto>(Messages.NameAlreadyExist);
 
                 var addedBranch = new Branch
                 {
-                    TenantId = tenantId,
+                    TenantId = targetTenantId,
                     Name = request.Name,
                     Address = request.Address,
                     Phone = request.Phone,

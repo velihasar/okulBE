@@ -12,22 +12,19 @@ namespace Business.Handlers.Tenants.FilterTenant
         {
             return c =>
                 c.IsDeleted == false &&
-                c.IsActive == true &&
                 c.Id == request.Id;
         }
 
         public static Expression<Func<Tenant, bool>> GetTenantsQueryFilter(GetTenantsQuery request)
         {
             return c =>
-                c.IsDeleted == false &&
-                c.IsActive == true;
+                c.IsDeleted == false;
         }
 
         public static Expression<Func<Tenant, bool>> CreateTenantCommandFilter(CreateTenantCommand request)
         {
             return c =>
                 c.IsDeleted == false &&
-                c.IsActive == true &&
                 c.Name == request.Name;
         }
 
@@ -35,7 +32,6 @@ namespace Business.Handlers.Tenants.FilterTenant
         {
             return c =>
                 c.IsDeleted == false &&
-                c.IsActive == true &&
                 c.Id == request.Id;
         }
     }

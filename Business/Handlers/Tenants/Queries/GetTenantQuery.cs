@@ -40,7 +40,8 @@ namespace Business.Handlers.Tenants.Queries
                     Id = tenant.Id,
                     Name = tenant.Name,
                     Code = tenant.Code,
-                    LogoUrl = tenant.LogoUrl
+                    LogoUrl = tenant.LogoUrl,
+                    IsActive = tenant.IsActive
                 };
                 return new SuccessDataResult<TenantGetByIdDto>(dto);
             }

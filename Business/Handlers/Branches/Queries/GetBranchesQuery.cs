@@ -19,6 +19,8 @@ namespace Business.Handlers.Branches.Queries
 {
     public class GetBranchesQuery : IRequest<IDataResult<IEnumerable<BranchGetAllDto>>>
     {
+        public int? TenantId { get; set; }
+
         public class GetBranchesQueryHandler : IRequestHandler<GetBranchesQuery, IDataResult<IEnumerable<BranchGetAllDto>>>
         {
             private readonly IBranchRepository _branchRepository;
@@ -31,20 +33,34 @@ namespace Business.Handlers.Branches.Queries
             }
 
             [PerformanceAspect(5)]
-            [CacheAspect(10)]
             [LogAspect(typeof(FileLogger))]
             [SecuredOperation(Priority = 1)]
             public async Task<IDataResult<IEnumerable<BranchGetAllDto>>> Handle(GetBranchesQuery request, CancellationToken cancellationToken)
             {
-                var list = await _branchRepository.GetListAsync(BranchFiltersHelper.GetBranchesQueryFilter(request));
-                var dtos = list.Select(x => new BranchGetAllDto
+                var userTenantId = Core.Extensions.UserInfoExtensions.GetTenantIdOrZero();
+                var query = _branchRepository.Query().Where(x => x.IsDeleted == false);
+
+                if (userTenantId > 0)
+                {
+                    query = query.Where(x => x.TenantId == userTenantId);
+                }
+                else if (request.TenantId.HasValue && request.TenantId.Value > 0)
+                {
+                    query = query.Where(x => x.TenantId == request.TenantId.Value);
+                }
+
+                var list = query.Select(x => new BranchGetAllDto
                 {
                     Id = x.Id,
+                    TenantId = x.TenantId,
+                    TenantName = x.Tenant != null ? x.Tenant.Name : null,
                     Name = x.Name,
                     Address = x.Address,
-                    Phone = x.Phone
-                });
-                return new SuccessDataResult<IEnumerable<BranchGetAllDto>>(dtos);
+                    Phone = x.Phone,
+                    IsActive = x.IsActive
+                }).ToList();
+
+                return new SuccessDataResult<IEnumerable<BranchGetAllDto>>(list);
             }
         }
     }

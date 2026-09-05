@@ -9,5 +9,6 @@ namespace Core.Entities.Dtos.TenantDto
         public string Name { get; set; }
         public string Code { get; set; }
         public string LogoUrl { get; set; }
+        public bool? IsActive { get; set; }
     }
 }

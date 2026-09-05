@@ -1,4 +1,4 @@
-﻿using System.Threading;
+using System.Threading;
 using System.Threading.Tasks;
 using Business.BusinessAspects;
 using Business.Constants;
@@ -25,7 +25,7 @@ namespace Business.Handlers.Users.Commands
             }
 
             [SecuredOperation(Priority = 1)]
-            [CacheRemoveAspect()]
+            [CacheRemoveAspect("GetUsers")]
             [LogAspect(typeof(FileLogger))]
             public async Task<IResult> Handle(DeleteUserCommand request, CancellationToken cancellationToken)
             {

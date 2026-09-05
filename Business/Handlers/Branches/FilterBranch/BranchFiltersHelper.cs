@@ -13,15 +13,13 @@ namespace Business.Handlers.Branches.FilterBranch
         {
             return c =>
                 c.IsDeleted == false &&
-                c.IsActive == true &&
                 c.Id == request.Id;
         }
 
         public static Expression<Func<Branch, bool>> GetBranchesQueryFilter(GetBranchesQuery request)
         {
             return c =>
-                c.IsDeleted == false &&
-                c.IsActive == true;
+                c.IsDeleted == false;
         }
 
         public static Expression<Func<Branch, bool>> CreateBranchCommandFilter(CreateBranchCommand request)
@@ -29,7 +27,6 @@ namespace Business.Handlers.Branches.FilterBranch
             var tenantId = UserInfoExtensions.GetTenantIdOrZero();
             return c =>
                 c.IsDeleted == false &&
-                c.IsActive == true &&
                 c.Name == request.Name &&
                 (tenantId <= 0 || c.TenantId == tenantId);
         }
@@ -38,7 +35,6 @@ namespace Business.Handlers.Branches.FilterBranch
         {
             return c =>
                 c.IsDeleted == false &&
-                c.IsActive == true &&
                 c.Id == request.Id;
         }
     }

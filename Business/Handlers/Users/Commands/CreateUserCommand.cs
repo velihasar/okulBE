@@ -24,19 +24,22 @@ namespace Business.Handlers.Users.Commands
         public DateTime RecordDate { get; set; }
         public DateTime UpdateContactDate { get; set; }
         public string Password { get; set; }
+        public int? TenantId { get; set; }
 
 
         public class CreateUserCommandHandler : IRequestHandler<CreateUserCommand, IResult>
         {
             private readonly IUserRepository _userRepository;
+            private readonly ITenantUserRepository _tenantUserRepository;
 
-            public CreateUserCommandHandler(IUserRepository userRepository)
+            public CreateUserCommandHandler(IUserRepository userRepository, ITenantUserRepository tenantUserRepository)
             {
                 _userRepository = userRepository;
+                _tenantUserRepository = tenantUserRepository;
             }
 
             [SecuredOperation(Priority = 1)]
-            [CacheRemoveAspect()]
+            [CacheRemoveAspect("GetUsers")]
             [LogAspect(typeof(ElasticSearchLogger))]
             public async Task<IResult> Handle(CreateUserCommand request, CancellationToken cancellationToken)
             {
@@ -58,6 +61,21 @@ namespace Business.Handlers.Users.Commands
 
                 _userRepository.Add(user);
                 await _userRepository.SaveChangesAsync();
+
+                if (request.TenantId.HasValue && request.TenantId.Value > 0)
+                {
+                    var tenantUser = new Core.Entities.Concrete.Project.TenantUser
+                    {
+                        UserId = user.UserId,
+                        TenantId = request.TenantId.Value,
+                        IsActive = true,
+                        IsDeleted = false,
+                        CreatedDate = DateTime.Now
+                    };
+                    _tenantUserRepository.Add(tenantUser);
+                    await _tenantUserRepository.SaveChangesAsync();
+                }
+
                 return new SuccessResult(Messages.Added);
             }
         }

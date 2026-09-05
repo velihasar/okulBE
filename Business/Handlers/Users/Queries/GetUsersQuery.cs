@@ -20,22 +20,67 @@ namespace Business.Handlers.Users.Queries
         public class GetUsersQueryHandler : IRequestHandler<GetUsersQuery, IDataResult<IEnumerable<UserDto>>>
         {
             private readonly IUserRepository _userRepository;
+            private readonly ITenantUserRepository _tenantUserRepository;
+            private readonly ITenantRepository _tenantRepository;
+            private readonly IUserGroupRepository _userGroupRepository;
+            private readonly IGroupRepository _groupRepository;
             private readonly IMapper _mapper;
 
-            public GetUsersQueryHandler(IUserRepository userRepository, IMapper mapper)
+            public GetUsersQueryHandler(
+                IUserRepository userRepository,
+                ITenantUserRepository tenantUserRepository,
+                ITenantRepository tenantRepository,
+                IUserGroupRepository userGroupRepository,
+                IGroupRepository groupRepository,
+                IMapper mapper)
             {
                 _userRepository = userRepository;
+                _tenantUserRepository = tenantUserRepository;
+                _tenantRepository = tenantRepository;
+                _userGroupRepository = userGroupRepository;
+                _groupRepository = groupRepository;
                 _mapper = mapper;
             }
 
             [SecuredOperation(Priority = 1)]
             [PerformanceAspect(5)]
-            [CacheAspect(10)]
             [LogAspect(typeof(ElasticSearchLogger))]
             public async Task<IDataResult<IEnumerable<UserDto>>> Handle(GetUsersQuery request, CancellationToken cancellationToken)
             {
                 var userList = await _userRepository.GetListAsync();
-                var userDtoList = userList.Select(user => _mapper.Map<UserDto>(user)).ToList();
+                var tenantUsers = _tenantUserRepository.Query().Where(tu => tu.IsActive == true && tu.IsDeleted == false).ToList();
+                var tenants = _tenantRepository.Query().Where(t => t.IsDeleted == false).ToList();
+                var userGroups = _userGroupRepository.Query().ToList();
+                var groups = _groupRepository.Query().ToList();
+
+                var userDtoList = userList.Select(user =>
+                {
+                    var dto = _mapper.Map<UserDto>(user);
+                    var tu = tenantUsers.FirstOrDefault(x => x.UserId == user.UserId);
+                    if (tu != null)
+                    {
+                        dto.TenantId = tu.TenantId;
+                        var t = tenants.FirstOrDefault(x => x.Id == tu.TenantId);
+                        if (t != null)
+                        {
+                            dto.TenantName = t.Name;
+                        }
+                    }
+
+                    var uGroups = userGroups.Where(ug => ug.UserId == user.UserId).ToList();
+                    dto.UserGroups = uGroups.Select(ug =>
+                    {
+                        var g = groups.FirstOrDefault(x => x.Id == ug.GroupId);
+                        return new SelectionItem
+                        {
+                            Id = ug.GroupId.ToString(),
+                            Label = g != null ? g.GroupName : $"Grup #{ug.GroupId}",
+                            IsSelected = true
+                        };
+                    }).ToList();
+
+                    return dto;
+                }).ToList();
 
                 return new SuccessDataResult<IEnumerable<UserDto>>(userDtoList);
             }
