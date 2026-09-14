@@ -47,13 +47,21 @@ namespace Business.Handlers.Users.Queries
             [LogAspect(typeof(ElasticSearchLogger))]
             public async Task<IDataResult<IEnumerable<UserDto>>> Handle(GetUsersQuery request, CancellationToken cancellationToken)
             {
+                var userTenantId = Core.Extensions.UserInfoExtensions.GetTenantIdOrZero();
                 var userList = await _userRepository.GetListAsync();
                 var tenantUsers = _tenantUserRepository.Query().Where(tu => tu.IsActive == true && tu.IsDeleted == false).ToList();
                 var tenants = _tenantRepository.Query().Where(t => t.IsDeleted == false).ToList();
                 var userGroups = _userGroupRepository.Query().ToList();
                 var groups = _groupRepository.Query().ToList();
 
-                var userDtoList = userList.Select(user =>
+                var userDtoList = userList
+                    .Where(user =>
+                    {
+                        if (userTenantId == 0) return true;
+                        var tu = tenantUsers.FirstOrDefault(x => x.UserId == user.UserId);
+                        return tu != null && tu.TenantId == userTenantId;
+                    })
+                    .Select(user =>
                 {
                     var dto = _mapper.Map<UserDto>(user);
                     var tu = tenantUsers.FirstOrDefault(x => x.UserId == user.UserId);

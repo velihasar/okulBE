@@ -1,4 +1,4 @@
-﻿
+
 using Business.Handlers.StudentParents.Commands;
 using FluentValidation;
 
@@ -9,20 +9,18 @@ namespace Business.Handlers.StudentParents.ValidationRules
     {
         public CreateStudentParentValidator()
         {
+            RuleFor(x => x.StudentId).NotEmpty();
             RuleFor(x => x.ParentId).NotEmpty();
             RuleFor(x => x.Relationship).NotEmpty();
-            RuleFor(x => x.IsPrimary).NotEmpty();
-
         }
     }
     public class UpdateStudentParentValidator : AbstractValidator<UpdateStudentParentCommand>
     {
         public UpdateStudentParentValidator()
         {
+            RuleFor(x => x.StudentId).NotEmpty();
             RuleFor(x => x.ParentId).NotEmpty();
             RuleFor(x => x.Relationship).NotEmpty();
-            RuleFor(x => x.IsPrimary).NotEmpty();
-
         }
     }
 }

@@ -17,8 +17,10 @@ namespace Business.Handlers.Tenants.FilterTenant
 
         public static Expression<Func<Tenant, bool>> GetTenantsQueryFilter(GetTenantsQuery request)
         {
+            var userTenantId = Core.Extensions.UserInfoExtensions.GetTenantIdOrZero();
             return c =>
-                c.IsDeleted == false;
+                c.IsDeleted == false &&
+                (userTenantId == 0 || c.Id == userTenantId);
         }
 
         public static Expression<Func<Tenant, bool>> CreateTenantCommandFilter(CreateTenantCommand request)

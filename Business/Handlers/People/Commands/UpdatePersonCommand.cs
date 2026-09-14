@@ -69,11 +69,13 @@ namespace Business.Handlers.People.Commands
                 }
                 isTherePersonRecord.UpdatedDate = System.DateTime.Now;
 
+                var cleanPhone = !string.IsNullOrWhiteSpace(request.Phone) ? request.Phone.Replace(" ", "").Trim() : null;
+
                 isTherePersonRecord.UserId = request.UserId;
                 isTherePersonRecord.FirstName = request.FirstName;
                 isTherePersonRecord.LastName = request.LastName;
                 isTherePersonRecord.DateOfBirth = request.DateOfBirth;
-                isTherePersonRecord.Phone = request.Phone;
+                isTherePersonRecord.Phone = cleanPhone;
                 isTherePersonRecord.Email = request.Email;
                 isTherePersonRecord.PhotoUrl = request.PhotoUrl;
                 isTherePersonRecord.IsActive = request.IsActive;

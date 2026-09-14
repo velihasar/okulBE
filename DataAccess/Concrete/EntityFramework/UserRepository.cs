@@ -27,6 +27,13 @@ namespace DataAccess.Concrete.EntityFramework
                 {
                     operationClaim.Name
                 }).Union(from user in Context.Users
+                join userGroup in Context.UserGroups on user.UserId equals userGroup.UserId
+                join g in Context.Groups on userGroup.GroupId equals g.Id
+                where user.UserId == userId
+                select new
+                {
+                    Name = g.GroupName
+                }).Union(from user in Context.Users
                 join userClaim in Context.UserClaims on user.UserId equals userClaim.UserId
                 join operationClaim in Context.OperationClaims on userClaim.ClaimId equals operationClaim.Id
                 where user.UserId == userId

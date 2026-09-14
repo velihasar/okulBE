@@ -56,6 +56,19 @@ namespace Business.Handlers.StudentParents.Commands
                 if (isThereStudentParentRecord)
                     return new ErrorDataResult<StudentParentCreateResponseDto>(Messages.NameAlreadyExist);
 
+                if (request.IsPrimary)
+                {
+                    var existingPrimaryParents = _studentParentRepository.Query()
+                        .Where(sp => sp.StudentId == request.StudentId && sp.IsPrimary && sp.IsDeleted == false)
+                        .ToList();
+
+                    foreach (var other in existingPrimaryParents)
+                    {
+                        other.IsPrimary = false;
+                        _studentParentRepository.Update(other);
+                    }
+                }
+
                 var addedStudentParent = new StudentParent
                 {
                     TenantId = tenantId,

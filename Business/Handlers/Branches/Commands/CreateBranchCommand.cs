@@ -62,12 +62,14 @@ namespace Business.Handlers.Branches.Commands
                 if (isThereBranchRecord)
                     return new ErrorDataResult<BranchCreateResponseDto>(Messages.NameAlreadyExist);
 
+                var cleanPhone = !string.IsNullOrWhiteSpace(request.Phone) ? request.Phone.Replace(" ", "").Trim() : null;
+
                 var addedBranch = new Branch
                 {
                     TenantId = targetTenantId,
                     Name = request.Name,
                     Address = request.Address,
-                    Phone = request.Phone,
+                    Phone = cleanPhone,
                     IsActive = true,
                     IsDeleted = false,
                     CreatedBy = userId > 0 ? userId : null,

@@ -39,9 +39,11 @@ namespace Business.Handlers.Users.Commands
             {
                 var isThereAnyUser = await _userRepository.GetAsync(u => u.UserId == request.UserId);
 
+                var cleanMobile = !string.IsNullOrWhiteSpace(request.MobilePhones) ? request.MobilePhones.Replace(" ", "").Trim() : null;
+
                 isThereAnyUser.FullName = request.FullName;
                 isThereAnyUser.Email = request.Email;
-                isThereAnyUser.MobilePhones = request.MobilePhones;
+                isThereAnyUser.MobilePhones = cleanMobile;
 
                 _userRepository.Update(isThereAnyUser);
                 await _userRepository.SaveChangesAsync();

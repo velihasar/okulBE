@@ -60,13 +60,25 @@ namespace Business.Handlers.StudentParents.Commands
                 }
                 isThereStudentParentRecord.UpdatedDate = System.DateTime.Now;
 
-                isThereStudentParentRecord.StudentId = request.StudentId;
-                isThereStudentParentRecord.ParentId = request.ParentId;
-                isThereStudentParentRecord.Relationship = request.Relationship;
+                if (request.Relationship != null)
+                {
+                    isThereStudentParentRecord.Relationship = request.Relationship;
+                }
                 isThereStudentParentRecord.IsPrimary = request.IsPrimary;
-                isThereStudentParentRecord.IsActive = request.IsActive;
+                isThereStudentParentRecord.IsActive = true;
 
-                _studentParentRepository.Update(isThereStudentParentRecord);
+                if (request.IsPrimary)
+                {
+                    var otherStudentParents = _studentParentRepository.Query()
+                        .Where(sp => sp.StudentId == isThereStudentParentRecord.StudentId && sp.ParentId != isThereStudentParentRecord.ParentId && sp.IsPrimary && sp.IsDeleted == false)
+                        .ToList();
+
+                    foreach (var other in otherStudentParents)
+                    {
+                        other.IsPrimary = false;
+                    }
+                }
+
                 await _studentParentRepository.SaveChangesAsync();
 
                 var dto = new StudentParentUpdateResponseDto

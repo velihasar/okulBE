@@ -19,9 +19,11 @@ namespace Business.Handlers.StudentParents.FilterStudentParent
 
         public static Expression<Func<StudentParent, bool>> GetStudentParentsQueryFilter(GetStudentParentsQuery request)
         {
+            var tenantId = UserInfoExtensions.GetTenantIdOrZero();
             return c =>
                 c.IsDeleted == false &&
-                c.IsActive == true;
+                c.IsActive == true &&
+                (tenantId <= 0 || c.TenantId == tenantId);
         }
 
         public static Expression<Func<StudentParent, bool>> CreateStudentParentCommandFilter(CreateStudentParentCommand request)
@@ -39,8 +41,7 @@ namespace Business.Handlers.StudentParents.FilterStudentParent
         {
             return c =>
                 c.IsDeleted == false &&
-                c.IsActive == true &&
-                c.Id == request.Id;
+                (request.Id > 0 ? c.Id == request.Id : (c.StudentId == request.StudentId && c.ParentId == request.ParentId));
         }
     }
 }

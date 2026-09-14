@@ -25,7 +25,7 @@ namespace Business.Handlers.Teachers.Commands
     /// </summary>
     public class CreateTeacherCommand : IRequest<IDataResult<TeacherCreateResponseDto>>
     {
-
+        public int? TenantId { get; set; }
         public int PersonId { get; set; }
         public System.DateTime StartDate { get; set; }
 
@@ -46,17 +46,21 @@ namespace Business.Handlers.Teachers.Commands
             [SecuredOperation(Priority = 1)]
             public async Task<IDataResult<TeacherCreateResponseDto>> Handle(CreateTeacherCommand request, CancellationToken cancellationToken)
             {
-                var tenantId = UserInfoExtensions.GetTenantIdOrZero();
+                var userTenantId = UserInfoExtensions.GetTenantIdOrZero();
                 var userId = UserInfoExtensions.GetUserIdOrZero();
 
-                var isThereTeacherRecord = _teacherRepository.Query().Any(TeacherFiltersHelper.CreateTeacherCommandFilter(request));
+                int targetTenantId = userTenantId > 0 ? userTenantId : (request.TenantId ?? 0);
 
-                if (isThereTeacherRecord)
-                    return new ErrorDataResult<TeacherCreateResponseDto>(Messages.NameAlreadyExist);
+                if (targetTenantId <= 0)
+                {
+                    return new ErrorDataResult<TeacherCreateResponseDto>("SuperAdmin olarak işlem yapmaktasınız. Lütfen geçerli bir kurum (okul) seçiniz.");
+                }
+
+
 
                 var addedTeacher = new Teacher
                 {
-                    TenantId = tenantId,
+                    TenantId = targetTenantId,
                     PersonId = request.PersonId,
                     StartDate = request.StartDate,
                     IsActive = true,

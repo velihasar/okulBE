@@ -64,10 +64,7 @@ namespace Business.Handlers.People.Commands
                     return new ErrorDataResult<PersonCreateResponseDto>("SuperAdmin olarak işlem yapmaktasınız. Lütfen geçerli bir kurum (okul) seçiniz.");
                 }
 
-                var isTherePersonRecord = _personRepository.Query().Any(PersonFiltersHelper.CreatePersonCommandFilter(request));
-
-                if (isTherePersonRecord)
-                    return new ErrorDataResult<PersonCreateResponseDto>(Messages.NameAlreadyExist);
+                var cleanPhone = !string.IsNullOrWhiteSpace(request.Phone) ? request.Phone.Replace(" ", "").Trim() : null;
 
                 var addedPerson = new Person
                 {
@@ -76,7 +73,7 @@ namespace Business.Handlers.People.Commands
                     FirstName = request.FirstName,
                     LastName = request.LastName,
                     DateOfBirth = request.DateOfBirth,
-                    Phone = request.Phone,
+                    Phone = cleanPhone,
                     Email = request.Email,
                     PhotoUrl = request.PhotoUrl,
                     IsActive = true,

@@ -72,9 +72,11 @@ namespace Business.Handlers.Branches.Commands
                 }
                 isThereBranchRecord.UpdatedDate = System.DateTime.Now;
 
+                var cleanPhone = !string.IsNullOrWhiteSpace(request.Phone) ? request.Phone.Replace(" ", "").Trim() : null;
+
                 isThereBranchRecord.Name = request.Name;
                 isThereBranchRecord.Address = request.Address;
-                isThereBranchRecord.Phone = request.Phone;
+                isThereBranchRecord.Phone = cleanPhone;
                 isThereBranchRecord.IsActive = request.IsActive;
 
 

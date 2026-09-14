@@ -50,13 +50,15 @@ namespace Business.Handlers.Users.Commands
                     return new ErrorResult(Messages.NameAlreadyExist);
                 }
 
+                var cleanMobile = !string.IsNullOrWhiteSpace(request.MobilePhones) ? request.MobilePhones.Replace(" ", "").Trim() : null;
+
                 var user = new User
                 {
                     Email = request.Email,
                     FullName = request.FullName,
                     Status = true,
                     CitizenId = request.CitizenId,
-                    MobilePhones = request.MobilePhones
+                    MobilePhones = cleanMobile
                 };
 
                 _userRepository.Add(user);

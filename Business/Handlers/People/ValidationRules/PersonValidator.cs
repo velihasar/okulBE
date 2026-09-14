@@ -11,8 +11,6 @@ namespace Business.Handlers.People.ValidationRules
         {
             RuleFor(x => x.FirstName).NotEmpty();
             RuleFor(x => x.LastName).NotEmpty();
-            RuleFor(x => x.Phone).NotEmpty();
-            RuleFor(x => x.Email).NotEmpty();
         }
     }
     public class UpdatePersonValidator : AbstractValidator<UpdatePersonCommand>
@@ -22,8 +20,6 @@ namespace Business.Handlers.People.ValidationRules
             RuleFor(x => x.Id).NotEmpty();
             RuleFor(x => x.FirstName).NotEmpty();
             RuleFor(x => x.LastName).NotEmpty();
-            RuleFor(x => x.Phone).NotEmpty();
-            RuleFor(x => x.Email).NotEmpty();
         }
     }
 }

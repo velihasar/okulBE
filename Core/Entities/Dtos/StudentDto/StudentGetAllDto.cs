@@ -10,5 +10,11 @@ namespace Core.Entities.Dtos.StudentDto
         public int PersonId { get; set; }
         public string StudentNumber { get; set; }
         public DateTime EnrollmentDate { get; set; }
+        public string? FirstName { get; set; }
+        public string? LastName { get; set; }
+        public DateTime? DateOfBirth { get; set; }
+        public string? Phone { get; set; }
+        public string? Email { get; set; }
+        public string? PhotoUrl { get; set; }
     }
 }
